@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0} [hidden]{display:none!important} img{max-width:100%}</style>
+<title>株の壁チェッカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<style>
+/* Layout: one narrow phone column — 入力 → 判定 → 売る前チェック → 設定。数字は等幅のUDゴシックで通帳のように揃える */
+:root {
+  --bg: #F3F6F9;
+  --surface: #FFFFFF;
+  --fg: #18212C;
+  --muted: #5B6878;
+  --line: #D9E0E8;
+  --accent: #29507F;
+  --accent-ink: #FFFFFF;
+  --ok: #1D8653;
+  --ok-bg: #E2F3E9;
+  --warn: #B87510;
+  --warn-soft: #F2C35B;
+  --warn-strong: #E39A1F;
+  --warn-bg: #FFF3D6;
+  --bad: #C2403A;
+  --bad-bg: #FBE3E1;
+  --track: #E6EBF1;
+  --font-body: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  --font-num: "BIZ UDGothic", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", ui-monospace, monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161D; --surface: #19212B; --fg: #E5EBF2; --muted: #98A5B5; --line: #2B3643;
+    --accent: #8EB0E3; --accent-ink: #0F1720;
+    --ok: #4CC488; --ok-bg: #173023; --warn: #F0C05A; --warn-soft: #9C7A2A; --warn-strong: #D99A2B;
+    --warn-bg: #352A14; --bad: #F0817A; --bad-bg: #3A1E1D; --track: #26303C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161D; --surface: #19212B; --fg: #E5EBF2; --muted: #98A5B5; --line: #2B3643;
+  --accent: #8EB0E3; --accent-ink: #0F1720;
+  --ok: #4CC488; --ok-bg: #173023; --warn: #F0C05A; --warn-soft: #9C7A2A; --warn-strong: #D99A2B;
+  --warn-bg: #352A14; --bad: #F0817A; --bad-bg: #3A1E1D; --track: #26303C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 520px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; display: grid; gap: 16px; }
+header { display: grid; gap: 2px; }
+.eyebrow { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+h1 { font-size: 24px; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h2 { font-size: 15px; margin: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.num, input.amount { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 700; font-size: 14px; }
+.inrow { display: flex; align-items: center; gap: 8px; }
+input.amount {
+  width: 100%; min-width: 0; font-size: 24px; padding: 10px 12px; border-radius: 10px;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); text-align: right;
+}
+input.amount:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.yen { font-size: 16px; color: var(--muted); }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+.sep { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+.labelrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.labelrow > label { font-weight: 700; font-size: 14px; }
+.seg-toggle { position: relative; display: inline-flex; border: 1.5px solid var(--line); border-radius: 99px; padding: 2px; background: var(--bg); }
+.seg-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.seg-toggle label { font-size: 13px; font-weight: 700; padding: 3px 14px; border-radius: 99px; cursor: pointer; color: var(--muted); }
+.seg-toggle input:checked + label { background: var(--accent); color: var(--accent-ink); }
+.seg-toggle input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 1px; }
+.hint.warn { color: var(--bad); font-weight: 700; }
+.lines { margin: 0; font-size: 12px; color: var(--muted); font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.chip-sample { justify-self: start; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--track); color: var(--muted); }
+
+/* 判定カード */
+.status { border-width: 2px; }
+.status[data-zone="ok"] { background: var(--ok-bg); border-color: var(--ok); }
+.status[data-zone="kin"], .status[data-zone="sw"] { background: var(--warn-bg); border-color: var(--warn-strong); }
+.status[data-zone="red"] { background: var(--bad-bg); border-color: var(--bad); }
+.pill { justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 99px; color: #fff; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .9; }
+[data-zone="ok"] .pill { background: var(--ok); }
+[data-zone="kin"] .pill, [data-zone="sw"] .pill { background: var(--warn-strong); color: #2A1B00; }
+[data-zone="red"] .pill { background: var(--bad); }
+:root[data-theme="dark"] [data-zone="ok"] .pill, :root[data-theme="dark"] [data-zone="red"] .pill { color: #10161D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) [data-zone="ok"] .pill, :root:not([data-theme="light"]) [data-zone="red"] .pill { color: #10161D; } }
+.big { display: grid; gap: 0; }
+.big .lead { font-size: 13px; color: var(--muted); }
+.big .value { font-size: 34px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+.big .value small { font-size: 16px; font-weight: 400; margin-left: 2px; }
+.sub { margin: 0; font-size: 14px; }
+.tip { margin: 0; font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px dashed var(--line); }
+
+/* ゲージ */
+.gauge { position: relative; padding-top: 34px; padding-bottom: 22px; }
+.track { position: relative; height: 14px; border-radius: 7px; background: var(--track); overflow: hidden; }
+.seg { position: absolute; top: 0; bottom: 0; }
+.seg.g { background: var(--ok); }
+.seg.y1 { background: var(--warn-soft); }
+.seg.y2 { background: var(--warn-strong); }
+.seg.r { background: var(--bad); }
+.marker { position: absolute; top: 28px; width: 0; height: 26px; transform: translateX(-1px); border-left: 3px solid var(--fg); }
+.marker::before { content: attr(data-label); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; white-space: nowrap; color: var(--fg); }
+.marker.after { border-left: 3px dashed var(--accent); }
+.marker.after::before { color: var(--accent); top: -32px; }
+.tick { position: absolute; top: 34px; height: 14px; border-left: 2px solid var(--surface); }
+.tlabel { position: absolute; top: 52px; font-size: 11px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; font-family: var(--font-num); }
+
+/* 税の比較 */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.compare div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 0; min-width: 0; }
+.compare .k { font-size: 11px; color: var(--muted); }
+.compare .v { font-size: 18px; font-weight: 700; }
+.save { margin: 0; font-size: 13px; font-weight: 700; color: var(--ok); }
+
+/* 売る前チェック */
+.verdict { display: grid; gap: 6px; border-radius: 10px; padding: 12px; }
+.verdict[data-tone="ok"] { background: var(--ok-bg); }
+.verdict[data-tone="warn"] { background: var(--warn-bg); }
+.verdict[data-tone="bad"] { background: var(--bad-bg); }
+.verdict[data-tone="none"] { background: var(--bg); }
+.verdict .head { font-weight: 700; font-size: 16px; }
+.verdict dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; margin: 0; font-size: 14px; }
+.verdict dt { color: var(--muted); }
+.verdict dd { margin: 0; text-align: right; white-space: nowrap; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* 設定・注意 */
+details.card { gap: 0; }
+details.card[open] { gap: 12px; }
+summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "＋"; color: var(--muted); }
+details[open] summary::after { content: "−"; }
+select { width: 100%; font: inherit; font-size: 15px; padding: 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); }
+.radio { display: grid; gap: 6px; }
+.radio label { display: flex; gap: 8px; align-items: center; font-weight: 400; font-size: 14px; }
+.notes { margin: 0; padding-left: 1.1em; font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+.warnbar { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: var(--bad-bg); color: var(--fg); margin: 0; }
+button.reset { justify-self: start; font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+@media (prefers-reduced-motion: no-preference) { .marker, .seg { transition: left .25s ease, width .25s ease; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">2026年分 ・ SBI 特定口座（源泉徴収なし）</span>
+    <h1>株の壁チェッカー</h1>
+  </header>
+
+  <p class="warnbar" id="yearWarn" hidden>2028年以降は税制が変わる可能性があります。このツールの基準（2026・2027年分）が今も有効か確認してください。</p>
+
+  <section class="card" aria-labelledby="h-now">
+    <div class="field">
+      <label id="h-now" for="g">今年の確定損益（特定口座）</label>
+      <div class="inrow"><input class="amount" id="g" inputmode="numeric" autocomplete="off" aria-describedby="g-hint"><span class="yen">円</span></div>
+      <span class="chip-sample" id="gSample">例の数字です。SBIで確認した数字に書き換えてください</span>
+      <p class="hint" id="g-hint">SBIで見られる「今年売って確定した損益の合計」を入力。損は「-」か「▲」付きで。NISA分と配当金は入れません。</p>
+    </div>
+    <hr class="sep">
+    <div class="field">
+      <div class="labelrow">
+        <label for="partIn">パート収入</label>
+        <div class="seg-toggle" role="radiogroup" aria-label="入力の単位">
+          <input type="radio" name="partMode" id="pm-month" value="month"><label for="pm-month">月額</label>
+          <input type="radio" name="partMode" id="pm-year" value="year"><label for="pm-year">年額</label>
+        </div>
+      </div>
+      <div class="inrow"><input class="amount" id="partIn" inputmode="numeric" autocomplete="off" aria-describedby="part-hint"><span class="yen">円</span></div>
+      <span class="chip-sample" id="partSample">仮の数字です（月3万円）</span>
+      <p class="hint" id="partYear"></p>
+      <p class="hint" id="part-hint">交通費も含めた額で（健保の扶養判定は交通費込みのため）。</p>
+      <p class="hint warn" id="partWarn" hidden></p>
+    </div>
+  </section>
+
+  <section class="card status" id="status" data-zone="ok" aria-live="polite">
+    <span class="pill" id="pill">そのまま（税0円）</span>
+    <div class="big"><span class="lead" id="bigLead">税0円のまま売れる利益</span><span class="value num" id="bigValue">あと 0<small>円</small></span></div>
+    <p class="sub" id="sub"></p>
+    <div class="gauge" aria-hidden="true">
+      <div class="track" id="track"></div>
+      <div id="ticks"></div>
+      <div class="marker" id="mNow" data-label="いま"></div>
+      <div class="marker after" id="mAfter" data-label="売った後" hidden></div>
+    </div>
+    <p class="lines" id="lines"></p>
+    <p class="tip" id="tip" hidden></p>
+    <div class="compare">
+      <div><span class="k">今のまま</span><span class="v num" id="taxNow">0円</span></div>
+      <div><span class="k">源泉ありだったら</span><span class="v num" id="taxGensen">0円</span></div>
+    </div>
+    <p class="save" id="save" hidden></p>
+  </section>
+
+  <section class="card" aria-labelledby="h-pre">
+    <div class="field">
+      <label id="h-pre" for="p">売る前チェック：これから売る分の損益（見込み）</label>
+      <div class="inrow"><input class="amount" id="p" inputmode="numeric" autocomplete="off"><span class="yen">円</span></div>
+      <span class="chip-sample" id="pSample">例の数字です</span>
+    </div>
+    <div class="verdict" id="verdict" data-tone="none">
+      <span class="head" id="vHead">金額を入れると、壁を越えるか判定します</span>
+      <dl id="vList" hidden>
+        <dt>売った後の合計</dt><dd id="vTotal"></dd>
+        <dt>税金（今年分）</dt><dd id="vTax"></dd>
+        <dt id="vRoomK">残り</dt><dd id="vRoom"></dd>
+      </dl>
+      <p class="sub" id="vNote"></p>
+    </div>
+  </section>
+
+  <details class="card" id="settings">
+    <summary>設定（最初に一度だけ確認）</summary>
+    <div class="field">
+      <label for="kintou">住んでいる市の区分（住民税がかかり始める線）</label>
+      <select id="kintou">
+        <option value="450000">1級地（45万円）</option>
+        <option value="415000">2級地（41.5万円）豊橋市はここの見込み</option>
+        <option value="380000">3級地（38万円）</option>
+      </select>
+    </div>
+    <div class="field">
+      <span style="font-weight:700;font-size:14px">夫の健保は、株の利益を扶養の収入に数える？</span>
+      <div class="radio" role="radiogroup">
+        <label><input type="radio" name="kenpo" value="unknown" id="k-unknown"> わからない（数える前提で判定）</label>
+        <label><input type="radio" name="kenpo" value="count" id="k-count"> 数える</label>
+        <label><input type="radio" name="kenpo" value="nocount" id="k-nocount"> 数えない</label>
+      </div>
+    </div>
+    <button class="reset" id="reset" type="button">入力を初期値に戻す</button>
+  </details>
+
+  <details class="card">
+    <summary>前提と注意</summary>
+    <ul class="notes">
+      <li>2026・2027年分の基準です（所得税の基礎控除104万円、住民税の基礎控除43万円、所得割は45万円以下なら非課税）。</li>
+      <li>住民税がかかり始める線は市の区分で変わります。豊橋市＝2級地は見込みです。申告が必要かどうかは市役所で確認してください。</li>
+      <li>扶養の線＝130万円（社会保険）－パート年収。130万円「未満」が条件のため1円手前までを表示します。夫の健保が株の利益を数えない場合、この線は関係ありません。</li>
+      <li>税金は概算です（住民税の調整控除などは入れていません）。夫の配偶者控除は、妻の所得95万円までは満額のままです。</li>
+      <li>配当金は口座の種類に関係なく受け取り時に約20%引かれており、この計算には入りません。</li>
+      <li>入力した数字はこの端末のブラウザにだけ保存されます。最終判断は市役所・健保・税務署の案内で。</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+/* LOGIC START */
+const RULE = {
+  shotokuKiso: 1040000,   // 所得税 基礎控除（2026・27年分、合計所得489万円以下）
+  juminKiso: 430000,      // 住民税 基礎控除
+  shotokuwariLine: 450000,// 住民税 所得割の非課税限度（扶養家族なし）
+  kintouAmt: 5500,        // 住民税 均等割（概算）
+  juminRate: 0.05,
+  shotokuRate: 0.15315,
+  gensenRate: 0.20315,
+  shaho: 1300000,         // 社会保険の扶養（未満）
+  kyuyoMin: 740000,       // 給与所得控除の最低額（2026・27年分）
+  haiguFull: 950000       // 配偶者特別控除が満額のままの妻の合計所得上限
+};
+
+function calc(G, cfg) {
+  const kyuyo = Math.max(0, cfg.part - RULE.kyuyoMin);
+  const total = kyuyo + Math.max(0, G);           // 妻の合計所得
+  const kintouLineG = cfg.kintou - kyuyo;          // 株の利益で見た均等割の線（以下なら非課税）
+  const swLineG = RULE.shotokuwariLine - kyuyo;    // 所得割の線（以下なら非課税）
+  const shahoMaxG = RULE.shaho - cfg.part - 1;     // 社保扶養：これ以下ならOK（未満）
+  const counts = cfg.kenpo !== 'nocount';
+
+  // 税金（申告した場合・株の分）
+  let tax = 0;
+  if (G > 0) {
+    if (total > cfg.kintou) tax += RULE.kintouAmt;
+    if (total > RULE.shotokuwariLine) {
+      const base = Math.floor(Math.max(0, G - Math.max(0, RULE.juminKiso - kyuyo)) / 1000) * 1000;
+      tax += Math.floor(base * RULE.juminRate / 100) * 100;
+    }
+    const baseI = Math.floor(Math.max(0, G - Math.max(0, RULE.shotokuKiso - kyuyo)) / 1000) * 1000;
+    tax += Math.floor(baseI * RULE.shotokuRate);
+  }
+  const gensen = G > 0 ? Math.floor(G * 0.15315) + Math.floor(G * 0.05) : 0;
+
+  let zone;
+  if (G <= kintouLineG) zone = 'ok';
+  else if (counts && G > shahoMaxG) zone = 'red';
+  else if (G <= swLineG) zone = 'kin';
+  else zone = 'sw';
+
+  return {
+    G, zone, tax, gensen, kyuyo, counts,
+    roomOk: kintouLineG - G,             // 税0円のまま売れる残り
+    roomShaho: shahoMaxG - G,            // 扶養の線までの残り（数える健保の場合）
+    kintouLineG, swLineG, shahoMaxG,
+    haiguOver: total > RULE.haiguFull,
+    shotokuOver: total > RULE.shotokuKiso
+  };
+}
+/* LOGIC END */
+
+const $ = (id) => document.getElementById(id);
+const yen = (n) => Math.round(n).toLocaleString('ja-JP') + '円';
+const man = (n) => { const v = n / 10000; return (Number.isInteger(v) ? v : v.toFixed(1)) + '万'; };
+const approx = (n) => n === 0 ? '0円' : '約' + yen(Math.round(n / 100) * 100);
+
+function parseYen(s) {
+  if (s == null) return NaN;
+  let t = String(s).trim()
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[，,\s円]/g, '')
+    .replace(/[－−ー‐―]/g, '-');
+  let neg = false;
+  if (/^[▲△-]/.test(t)) { neg = true; t = t.replace(/^[▲△-]+/, ''); }
+  if (t === '') return NaN;
+  const v = Number(t);
+  if (!Number.isFinite(v)) return NaN;
+  return neg ? -v : v;
+}
+const fmtInput = (v) => Number.isFinite(v) ? (v < 0 ? '-' : '') + Math.abs(Math.round(v)).toLocaleString('ja-JP') : '';
+
+const KEY = 'kabu-kabe-checker-v1';
+const DEFAULTS = { g: 280000, p: 160000, partMode: 'month', partIn: 30000, part: 360000, kintou: 415000, kenpo: 'unknown', gTouched: false, pTouched: false, partTouched: false };
+let state = { ...DEFAULTS };
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') state = { ...DEFAULTS, ...s }; } catch (e) {}
+const partAnnual = () => {
+  const v = Number.isFinite(state.partIn) ? Math.max(0, state.partIn) : 0;
+  return state.partMode === 'month' ? v * 12 : v;
+};
+state.part = partAnnual();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+function placeGauge(r, after) {
+  const cfg = state;
+  const top = Math.max(r.G, after ? after.G : 0);
+  const SCALE = Math.max(1100000, Math.ceil((top + 120000) / 100000) * 100000);
+  const pct = (v) => Math.min(100, Math.max(0, v / SCALE * 100));
+  const track = $('track');
+  const segs = [];
+  const a = Math.max(0, r.kintouLineG), b = Math.max(a, r.swLineG);
+  segs.push(['g', 0, a]);
+  segs.push(['y1', a, b]);
+  if (r.counts) { const c = Math.max(b, r.shahoMaxG + 1); segs.push(['y2', b, c]); segs.push(['r', c, SCALE]); }
+  else segs.push(['y2', b, SCALE]);
+  track.innerHTML = segs.map(([cls, s, e]) => `<div class="seg ${cls}" style="left:${pct(s)}%;width:${pct(e) - pct(s)}%"></div>`).join('');
+
+  const ticks = [];
+  ticks.push([a, man(a), true]);
+  ticks.push([b, '', false]);
+  if (r.counts) ticks.push([r.shahoMaxG + 1, man(r.shahoMaxG + 1), true]);
+  else ticks.push([RULE.haiguFull - r.kyuyo, man(RULE.haiguFull - r.kyuyo), true]);
+  $('ticks').innerHTML = ticks.map(([v, label, show]) =>
+    `<div class="tick" style="left:${pct(v)}%"></div>` + (show && label ? `<div class="tlabel" style="left:${pct(v)}%">${label}</div>` : '')).join('');
+
+  const clampPct = (v) => Math.min(98.5, Math.max(1.5, pct(v)));
+  $('mNow').style.left = clampPct(r.G) + '%';
+  if (after) { $('mAfter').hidden = false; $('mAfter').style.left = clampPct(after.G) + '%'; }
+  else $('mAfter').hidden = true;
+}
+
+const PILL = { ok: 'そのまま（税0円）', kin: '申告ゾーン（均等割のみ）', sw: '申告ゾーン', red: '相談ゾーン' };
+
+function render() {
+  const G = Number.isFinite(state.g) ? state.g : 0;
+  const r = calc(G, state);
+  const P = Number.isFinite(state.p) ? state.p : NaN;
+  const after = Number.isFinite(P) && P !== 0 ? calc(G + P, state) : null;
+
+  $('gSample').hidden = state.gTouched;
+  $('pSample').hidden = state.pTouched;
+  $('partSample').hidden = state.partTouched;
+  $('partYear').textContent = state.partMode === 'month'
+    ? '→ 年 ' + yen(state.part) + ' の見込み（×12か月）で計算'
+    : '→ 年 ' + yen(state.part) + ' で計算';
+  const pw = $('partWarn');
+  if (state.part >= RULE.shaho) { pw.hidden = false; pw.textContent = 'パート収入だけで130万円以上です。株に関係なく夫の扶養から外れる水準です。'; }
+  else if (state.part > 1900000 - 1) { pw.hidden = false; pw.textContent = 'この金額はツールの対象外です。'; }
+  else if (state.part > RULE.kyuyoMin) { pw.hidden = false; pw.textContent = 'パート年収が74万円を超えると給与の所得が出るため、住民税の壁が下がります（自動で反映済み）。'; }
+  else pw.hidden = true;
+
+  // 壁の位置（パート収入と連動）
+  const kinTxt = r.kintouLineG > 0 ? '住民税の壁 ' + man(r.kintouLineG) + '円' : '住民税の壁 パート収入だけで超過';
+  const shaTxt = r.counts ? (r.shahoMaxG >= 0 ? ' ／ 扶養の壁 ' + man(r.shahoMaxG + 1) + '円未満' : ' ／ 扶養の壁 パート収入だけで超過') : '';
+  $('lines').textContent = 'パート年' + man(state.part) + '円で計算 → ' + kinTxt + shaTxt;
+
+  // 判定カード
+  $('status').dataset.zone = r.zone;
+  $('pill').textContent = PILL[r.zone];
+  let lead, value, sub, tip = '';
+  if (r.zone === 'ok') {
+    lead = '税0円のまま売れる利益';
+    value = 'あと ' + yen(r.roomOk);
+    sub = man(r.kintouLineG) + '円を超えると住民税の申告が必要になります。';
+    if (G < 0) sub = '今は損失なので、その分だけ枠が広がっています。' + sub;
+    if (r.roomOk < 50000) tip = '残りが少なくなっています。ここから先の売買はNISAで。';
+  } else if (r.zone === 'red') {
+    if (state.part >= RULE.shaho) {
+      lead = 'パート収入だけで扶養の線（130万円）に届いています';
+      value = '要相談';
+      sub = '株の利益に関係なく、夫の健保の扶養が外れる水準です。夫に相談を。';
+    } else {
+      lead = '扶養の線（130万円－パート年収）を超えています';
+      value = yen(-r.roomShaho) + ' 超過';
+      sub = '夫の健保の扶養が外れる可能性があります。これ以上売る前に夫に相談を。';
+    }
+  } else {
+    if (r.counts) { lead = '扶養の線まで売れる利益'; value = 'あと ' + yen(r.roomShaho); }
+    else { lead = '税金の見込み（申告した場合）'; value = approx(r.tax); }
+    sub = (r.zone === 'kin' ? '住民税の均等割（約5,500円）だけかかります。' : '住民税がかかります（税金 ' + approx(r.tax) + '）。')
+      + '翌年2〜3月に申告が必要です。扶養はOK。';
+    if (!r.counts && r.haiguOver) sub += ' 妻の所得が95万円を超えたため、夫の配偶者控除が減り始めています。';
+    if (!r.counts && r.shotokuOver) sub += ' 所得税もかかっています。';
+    if (state.kenpo === 'unknown') tip = '夫の健保が株の利益を数えるか分からないため、数える前提で判定しています。';
+  }
+  $('bigLead').textContent = lead;
+  $('bigValue').innerHTML = value.replace(/円/, '<small>円</small>');
+  $('sub').textContent = sub;
+  $('tip').hidden = !tip; $('tip').textContent = tip;
+  $('taxNow').textContent = approx(r.tax);
+  $('taxGensen').textContent = approx(r.gensen);
+  const diff = r.gensen - r.tax;
+  $('save').hidden = !(diff > 0);
+  $('save').textContent = '今のままで ' + approx(diff) + ' 得しています';
+
+  placeGauge(r, after);
+
+  // 売る前チェック
+  const v = $('verdict');
+  if (!after) {
+    v.dataset.tone = 'none';
+    $('vHead').textContent = '金額を入れると、壁を越えるか判定します';
+    $('vList').hidden = true; $('vNote').textContent = '';
+    return;
+  }
+  $('vList').hidden = false;
+  $('vTotal').textContent = yen(after.G);
+  $('vTax').textContent = approx(r.tax) + ' → ' + approx(after.tax);
+  let tone, head, note = '';
+  if (after.zone === 'ok') {
+    tone = 'ok'; head = 'OK：税0円のまま';
+    $('vRoomK').textContent = '税0円の残り'; $('vRoom').textContent = yen(after.roomOk);
+    if (P < 0) note = '損失なので、税0円の枠が ' + yen(-P) + ' 広がります。';
+  } else if (after.zone === 'red') {
+    tone = 'bad'; head = '扶養の線を越えます。売る前に夫に相談';
+    $('vRoomK').textContent = '扶養の線までの残り（売る前）'; $('vRoom').textContent = yen(Math.max(0, r.roomShaho));
+    note = r.zone === 'red' ? 'すでに線を越えています。' : 'この売却の利益のうち ' + yen(Math.max(0, r.roomShaho)) + ' までなら扶養の線の内側です。超える分はNISAで売るか、来年に回してください。';
+  } else {
+    tone = 'warn';
+    if (r.zone === 'ok') {
+      head = '壁を越えます：税金がかかり、申告が必要に';
+      note = '税0円のまま売れるのは、この利益のうち ' + yen(Math.max(0, r.roomOk)) + ' まで。超える ' + yen(after.G - after.kintouLineG) + ' はNISAで売るか、来年に回せば税0円のままです。';
+    } else {
+      head = '申告ゾーン内です（扶養はOK）';
+      note = '税金が ' + approx(after.tax - r.tax) + ' 増えます。';
+    }
+    if (after.counts) { $('vRoomK').textContent = '売った後、扶養の線までの残り'; $('vRoom').textContent = yen(after.roomShaho); }
+    else { $('vRoomK').textContent = '売った後の妻の所得'; $('vRoom').textContent = yen(after.G + after.kyuyo); }
+  }
+  v.dataset.tone = tone; $('vHead').textContent = head; $('vNote').textContent = note;
+}
+
+function bindAmount(id, key, touchedKey) {
+  const el = $(id);
+  el.value = fmtInput(state[key]);
+  el.addEventListener('input', () => {
+    const v = parseYen(el.value);
+    state[key] = Number.isFinite(v) ? v : (el.value.trim() === '' ? NaN : state[key]);
+    if (touchedKey) state[touchedKey] = true;
+    save(); render();
+  });
+  el.addEventListener('blur', () => { if (Number.isFinite(state[key])) el.value = fmtInput(state[key]); });
+}
+bindAmount('g', 'g', 'gTouched');
+bindAmount('p', 'p', 'pTouched');
+// パート収入（月額／年額）
+const partEl = $('partIn');
+partEl.value = fmtInput(state.partIn);
+partEl.addEventListener('input', () => {
+  const v = parseYen(partEl.value);
+  if (Number.isFinite(v)) state.partIn = Math.max(0, v);
+  else if (partEl.value.trim() === '') state.partIn = 0;
+  state.partTouched = true;
+  state.part = partAnnual();
+  save(); render();
+});
+partEl.addEventListener('blur', () => { partEl.value = fmtInput(state.partIn); });
+function syncPartMode() {
+  document.querySelectorAll('input[name="partMode"]').forEach((el) => { el.checked = el.value === state.partMode; });
+}
+document.querySelectorAll('input[name="partMode"]').forEach((el) => {
+  el.addEventListener('change', () => {
+    if (state.partMode === el.value) return;
+    // 単位を切り替えても年額は変えない
+    state.partIn = el.value === 'month' ? Math.round(state.part / 12) : state.part;
+    state.partMode = el.value;
+    state.part = partAnnual();
+    partEl.value = fmtInput(state.partIn);
+    save(); render();
+  });
+});
+syncPartMode();
+
+$('kintou').value = String(state.kintou);
+$('kintou').addEventListener('change', (e) => { state.kintou = Number(e.target.value); save(); render(); });
+document.querySelectorAll('input[name="kenpo"]').forEach((el) => {
+  el.checked = el.value === state.kenpo;
+  el.addEventListener('change', () => { state.kenpo = el.value; save(); render(); });
+});
+$('reset').addEventListener('click', () => {
+  state = { ...DEFAULTS };
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  state.part = partAnnual();
+  $('g').value = fmtInput(state.g); $('p').value = fmtInput(state.p); partEl.value = fmtInput(state.partIn);
+  syncPartMode();
+  $('kintou').value = String(state.kintou);
+  document.querySelectorAll('input[name="kenpo"]').forEach((el) => { el.checked = el.value === state.kenpo; });
+  render();
+});
+if (new Date().getFullYear() > 2027) $('yearWarn').hidden = false;
+render();
+</script>
+</body>
+</html>
