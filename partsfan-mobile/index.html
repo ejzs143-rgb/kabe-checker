@@ -132,7 +132,7 @@
       <div class="arrow">↓</div>
       <div class="step">④ MegaZipで EA11Rの図面一覧（95件）が開く</div>
       <div class="arrow">↓</div>
-      <div class="step">⑤ 図面番号から純正品番を特定して、品番メモに保存する</div>
+      <div class="step">⑤ 品番を特定して、画面下の左から3番目「✎ 品番メモ」タブに保存する</div>
       <div class="arrow">↓</div>
       <div class="step">⑥ Gemini等で、豊橋市までの送料込み最安値を探す</div>
     </div>
@@ -217,6 +217,7 @@
     <div class="card">
       <label for="mPn" style="margin-top:0">品番 <span style="color:var(--accent)">*必須</span></label>
       <input type="text" id="mPn" placeholder="例: 18117-64D01" autocomplete="off" />
+      <p class="small" style="margin:6px 0 0">MegaZipのハイフンなし表記（例: 1111160B0000）のまま入れてOK。保存するときに正式表記（11111-60B00）へ自動で直します。</p>
       <label for="mName">部品名</label>
       <input type="text" id="mName" placeholder="例: ISCバルブ" autocomplete="off" />
       <div class="row">
@@ -550,7 +551,20 @@
 
   /* 品番メモ（この端末のブラウザ保存） */
   var MEMO_KEY='pfh_memos_v1';
-  function loadMemos(){ try{return JSON.parse(localStorage.getItem(MEMO_KEY)||'[]');}catch(e){return [];} }
+  function formatSuzukiPn(v){
+    var raw=String(v||'').trim();
+    if(raw.indexOf('-')>=0) return raw;
+    var t=raw.replace(/\s/g,'').toUpperCase();
+    var ok=false;
+    if(/^[0-9A-Z]{12,13}$/.test(t)) ok=true;
+    if(/^[0-9A-Z]{10}$/.test(t)&&/[A-Z]/.test(t.slice(5))) ok=true;
+    if(!ok) return raw;
+    var base=t.slice(0,10), rest=t.slice(10);
+    var f=base.slice(0,5)+'-'+base.slice(5);
+    if(rest&&!/^0+$/.test(rest)) f+='-'+rest;
+    return f;
+  }
+  function loadMemos(){ try{var l=JSON.parse(localStorage.getItem(MEMO_KEY)||'[]'); l.forEach(function(x){x.pn=formatSuzukiPn(x.pn);}); return l;}catch(e){return [];} }
   function saveMemos(list){ try{localStorage.setItem(MEMO_KEY,JSON.stringify(list));}catch(e){toast('保存できませんでした（ブラウザの空き容量不足の可能性）');} }
   function esc(s){var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML;}
   function renderMemos(){
@@ -608,7 +622,7 @@
     $('saveMemoBtn').textContent='メモを保存する'; $('cancelEditBtn').style.display='none';
   }
   $('saveMemoBtn').addEventListener('click',function(){
-    var pn=$('mPn').value.trim();
+    var pn=formatSuzukiPn($('mPn').value.trim());
     if(!pn){toast('品番を入力してください'); $('mPn').focus(); return;}
     var list=loadMemos(); var id=$('mId').value;
     var rec={pn:pn,name:$('mName').value.trim(),qty:$('mQty').value||'1',car:$('mCar').value.trim(),note:$('mNote').value.trim()};
