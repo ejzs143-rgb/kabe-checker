@@ -136,6 +136,11 @@
     font-weight:700;font-family:inherit;cursor:pointer;padding:0 12px;color:inherit}
   .qmemo button.go{background:#1f6feb;border-color:#1f6feb;color:#fff}
   #archiveBody .panel{display:block !important}
+
+  .ditem{display:block;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin-top:8px;text-decoration:none;color:inherit}
+  .ditem .jp{display:block;font-size:18px;font-weight:800}
+  .ditem .en{display:block;font-size:13px;opacity:.65;margin-top:2px}
 </style>
 </head>
 <body>
@@ -143,7 +148,12 @@
   <!-- ============ 作業画面（1画面完結） ============ -->
   <section id="panel-main">
     <h1>EA11R 品番しらべ</h1>
-    <a class="qbtn" href="https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1" target="_blank" rel="noopener">① 図面を開く（MegaZip）</a>
+    <button class="qbtn" type="button" id="diagramToggle">① 図面を日本語で選ぶ（95件）</button>
+    <div id="diagramBox" style="display:none;margin-top:10px">
+      <input type="text" id="diagramFilter" placeholder="絞り込み（例: ブレーキ、ランプ、ドア）" autocomplete="off" />
+      <div id="diagramList"></div>
+    </div>
+    <a class="qbtn" style="margin-top:10px" href="https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1" target="_blank" rel="noopener">MegaZipの全一覧（英語）を開く</a>
     <div class="qsub">
       <a href="https://www.amayama.com/en/catalogs/suzuki/cappuccino/1-open-right-1991-2080" target="_blank" rel="noopener">Amayamaで照合</a>
       <a href="https://partsfan.com/suzuki/" target="_blank" rel="noopener">PartsFanで照合</a>
@@ -758,6 +768,28 @@
     $('quickPn').value=''; quickPreviewUpdate();
     copyText(buildPrompt(rec),'保存しました。検索文をコピーしたので、Geminiに貼ってください');
     setTimeout(function(){window.open('https://gemini.google.com/app','_blank','noopener');},350);
+  });
+
+  /* ===== 図面一覧（日本語） ===== */
+  var DIAGRAM_BASE='https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1?diagram=';
+  var DIAGRAMS=[["工具", "Tool", "23053199_0"], ["シリンダーヘッド", "Cylinder Head", "23053200_1"], ["シリンダー", "Cylinder", "23053201_2"], ["タイミングベルト", "Timing Belt", "23053202_3"], ["エンジン ガスケットセット", "Engine Gasket Set", "23053203_4"], ["オイルパン", "Oil Pan", "23053204_5"], ["エンジンマウント", "Engine Mounting", "23053205_6"], ["ラベル", "Label", "23033910_7"], ["クランクシャフト", "Crankshaft", "23053206_8"], ["カムシャフト／バルブ", "Camshaft/Valve", "23037347_9"], ["インテークマニホールド（吸気）", "Intake Manifold", "23053207_10"], ["スロットルボディ", "Throttle Body", "23053208_11"], ["エアクリーナー", "Air Cleaner", "23053209_12"], ["ターボチャージャー", "Turbocharger", "23053210_13"], ["エキゾーストマニホールド（排気）", "Exhaust Manifold", "23053211_14"], ["マフラー", "Muffler", "23053212_15"], ["燃料ポンプ", "Fuel Pump", "23053213_16"], ["デリバリーパイプ／インジェクター", "Delivery Pipe/Fuel Injector", "23053214_17"], ["オイルポンプ", "Oil Pump", "23036907_18"], ["ウォーターポンプ", "Water Pump", "23034968_19"], ["ラジエーター", "Radiator", "23053215_20"], ["ウォーターホース", "Water Hose", "23053216_21"], ["排出ガス制御（エミッション）", "Emission Control", "23053217_22"], ["クラッチ（MT）", "MT-Clutch", "23053218_23"], ["トランスミッションケース（MT）", "MT-Transmission Case", "23053219_24"], ["トランスミッションギア（MT）", "MT-Transmission Gear", "23053220_25"], ["ギアシフトケース（MT）", "MT-Gear Shift Case", "23053221_26"], ["ギアシフトフォーク（MT）", "MT-Gear Shift Fork", "23053222_27"], ["プロペラシャフト", "Propeller Shaft", "23053223_28"], ["ギアシフトコントロール", "Gear Shift Control", "23053224_29"], ["リアデフ ギア", "Rear Differential Gear", "23053225_30"], ["リアデフ マウント", "Rear Differential Mounting", "23053226_31"], ["スターターモーター（セル）", "Starting Motor", "23053227_32"], ["オルタネーター（発電機）", "Generator", "23034983_33"], ["ディストリビューター", "Distributor", "23053228_34"], ["バッテリー", "Battery", "23053229_35"], ["電装コントロール", "Electrical Control", "23053230_36"], ["スピードメーター", "Speedometer", "23053231_37"], ["フロントランプ", "Front Lamp", "23053232_38"], ["リアランプ", "Rear Lamp", "23053233_39"], ["ワイヤーハーネス（配線）", "Wiring Harness", "23053234_40"], ["ロックセット（キーシリンダー）", "Lock Set", "23053235_41"], ["フロントワイパー／ウォッシャー", "Front Wind Wiper/Washer", "23053236_42"], ["ラジオ", "Radio", "23053237_43"], ["フロントサスペンション", "Front Suspension", "23053238_44"], ["リアサスペンション", "Rear Suspension", "23053239_45"], ["ホイール／タイヤ", "Road Wheel/Tire", "23053240_46"], ["フロントホイールハブ", "Front Wheel Hub", "23053241_47"], ["リアドライブシャフト", "Rear Drive Shaft", "23053242_48"], ["フロントサスペンションフレーム", "Front Suspension Frame", "23053243_49"], ["リアサスペンションフレーム", "Rear Suspension Frame", "23053244_50"], ["ステアリングホイール（ハンドル）", "Steering Wheel", "23053245_51"], ["ステアリングコラム", "Steering Column", "23053246_52"], ["ステアリングユニット", "Steering Unit", "23053247_53"], ["ペダル／ペダルブラケット", "Pedal/Pedal Bracket", "23053248_54"], ["ブレーキマスターシリンダー", "Brake Master Cylinder", "23053249_55"], ["ブレーキパイピング（配管）", "Brake Piping", "23053250_56"], ["リアホイールブレーキ", "Rear Wheel Brake", "23053251_57"], ["パーキングブレーキ", "Parking Brake", "23053252_58"], ["フロントホイールブレーキ", "Front Wheel Brake", "23053253_59"], ["フロントフード（ボンネット）", "Front Hood", "23053254_60"], ["フロントフェンダー", "Front Fender", "23053255_61"], ["フロントボディパネル", "Front Body Panel", "23053256_62"], ["フロアパネル", "Floor Panel", "23053257_63"], ["サイドボディパネル", "Side Body Panel", "23053258_64"], ["トランクリッド", "Trunk Lid", "23053259_65"], ["カバー／キャップ", "Cover/Cap", "23053260_66"], ["フロントドアパネル", "Front Door Panel", "23053261_67"], ["フロントバンパー", "Front Bumper", "23053262_68"], ["リアバンパー", "Rear Bumper", "23053263_69"], ["フューエルリッドオープナー（給油口）", "Fuel Lid Opener", "23053264_70"], ["インストルメントパネル", "Instrument Panel", "23053265_71"], ["インパネ ガーニッシュ", "Instrument Panel Garnish", "23053266_72"], ["ベンチレーター（送風口）", "Ventilator", "23053267_73"], ["ヒーターコントロール", "Heater Control", "23053268_74"], ["フロアマット／カーペット", "Floor Mat/Carpet", "23053269_75"], ["コンソールボックス", "Console Box", "23053270_76"], ["内装トリム", "Interior Trim", "23053271_77"], ["アウターガーニッシュ（外装モール）", "Outer Garnish", "23053272_78"], ["トランクルーム", "Trunk Room", "23053273_79"], ["エンブレム", "Emblem", "23053274_80"], ["リアピラーパネル", "Rear Pillar Panel", "23053275_81"], ["センタールーフ", "Center Roof", "23053276_82"], ["サイドルーフ", "Side Roof", "23053277_83"], ["フロントドアロック", "Front Door Lock", "23053278_84"], ["フロントドアレギュレーター（窓）", "Front Door Regulator", "23053279_85"], ["ウェザーストリップ／ガラス", "Weather Strip/Glass", "23053280_86"], ["ミラー／サンバイザー", "Mirror/Sun Visor", "23053281_87"], ["シートベルト", "Seat Belt", "23053282_88"], ["フロントシート", "Front Seat", "23053283_89"], ["燃料タンク", "Fuel Tank", "23053284_90"], ["エアコン", "Air Conditioner", "23053285_91"], ["コンプレッサー（エアコン）", "Compressor", "23053286_92"], ["エバポレーター", "Evaporator", "23053287_93"], ["エアコン ハーネス", "A/C Harness", "23053288_94"]];
+  function renderDiagrams(){
+    var q=($('diagramFilter').value||'').toLowerCase();
+    var box=$('diagramList'); box.innerHTML='';
+    DIAGRAMS.forEach(function(d){
+      if(q && (d[0]+' '+d[1]).toLowerCase().indexOf(q)<0) return;
+      var a=document.createElement('a');
+      a.className='ditem'; a.href=DIAGRAM_BASE+d[2]; a.target='_blank'; a.rel='noopener';
+      var jp=document.createElement('span'); jp.className='jp'; jp.textContent=d[0];
+      var en=document.createElement('span'); en.className='en'; en.textContent=d[1];
+      a.appendChild(jp); a.appendChild(en); box.appendChild(a);
+    });
+  }
+  $('diagramFilter').addEventListener('input',renderDiagrams);
+  $('diagramToggle').addEventListener('click',function(){
+    var b=$('diagramBox'); var open=b.style.display!=='none';
+    b.style.display=open?'none':'block';
+    if(!open){renderDiagrams(); $('diagramFilter').focus();}
   });
   renderQuick();
   /* 旧タブ画面はアーカイブへ移し、下部タブは廃止 */
