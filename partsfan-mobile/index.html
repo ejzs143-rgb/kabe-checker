@@ -113,10 +113,57 @@
     border-radius:5px;font-size:14px;font-weight:900;vertical-align:-6px;margin:0 2px}
   details{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:6px 16px;margin:12px 0}
   summary{min-height:48px;display:flex;align-items:center;font-weight:800;cursor:pointer;font-size:15.5px}
+
+  /* ===== 1画面ワーク画面 ===== */
+  #panel-main h1{font-size:20px;margin:6px 0 14px}
+  .qbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:64px;
+    border-radius:14px;font-size:19px;font-weight:800;text-decoration:none;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface);color:inherit;font-family:inherit}
+  .qbtn.primary{background:#1f6feb;border-color:#1f6feb;color:#fff;margin-top:12px}
+  .qbtn:active{transform:scale(.99)}
+  .qsub{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .qsub a{display:flex;align-items:center;justify-content:center;min-height:48px;border:1px solid var(--line);
+    border-radius:12px;text-decoration:none;font-weight:700;background:var(--surface);color:inherit}
+  .qcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:16px}
+  .qcard label{margin-top:0;font-weight:800}
+  .qrow2{display:flex;gap:10px}
+  .qrow2 input{flex:1;min-width:0}
+  .qprev{font-size:17px;font-weight:800;margin-top:10px;min-height:24px}
+  .qmemo{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:10px 12px;margin-top:10px}
+  .qmemo .pn{flex:1;font-size:18px;font-weight:800;word-break:break-all;cursor:pointer}
+  .qmemo button{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+    font-weight:700;font-family:inherit;cursor:pointer;padding:0 12px;color:inherit}
+  .qmemo button.go{background:#1f6feb;border-color:#1f6feb;color:#fff}
+  #archiveBody .panel{display:block !important}
 </style>
 </head>
 <body>
 <main>
+  <!-- ============ 作業画面（1画面完結） ============ -->
+  <section id="panel-main">
+    <h1>EA11R 品番しらべ</h1>
+    <a class="qbtn" href="https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1" target="_blank" rel="noopener">① 図面を開く（MegaZip）</a>
+    <div class="qsub">
+      <a href="https://www.amayama.com/en/catalogs/suzuki/cappuccino/1-open-right-1991-2080" target="_blank" rel="noopener">Amayamaで照合</a>
+      <a href="https://partsfan.com/suzuki/" target="_blank" rel="noopener">PartsFanで照合</a>
+    </div>
+    <div class="qcard">
+      <label for="quickPn">② 品番（図面で見つけた番号）</label>
+      <div class="qrow2">
+        <input type="text" id="quickPn" placeholder="例: 1111160B0000" autocomplete="off" />
+        <button class="btn" type="button" id="quickPaste">貼り付け</button>
+      </div>
+      <div class="qprev" id="quickPreview"></div>
+      <button class="qbtn primary" type="button" id="quickGo">③ 保存して最安検索（Gemini）</button>
+    </div>
+    <div id="quickList"></div>
+    <details style="margin-top:20px">
+      <summary>その他の機能・説明（通常は開かない）</summary>
+      <div id="archiveBody"></div>
+    </details>
+  </section>
+
 
   <!-- ============ ホーム ============ -->
   <section class="panel on" id="panel-home">
@@ -652,6 +699,75 @@
   var core=usText.replace(/\/\/ ==UserScript==[\s\S]*?\/\/ ==\/UserScript==/,'').trim();
   var bookmarklet='javascript:'+encodeURIComponent(core);
   $('copyBmBtn').addEventListener('click',function(){ copyText(bookmarklet,'ブックマークレットをコピーしました'); });
+  /* ===== 1画面ワーク画面 ===== */
+  function buildPrompt(m){
+    var compact=String(m.pn||'').replace(/[\s-]/g,'');
+    return 'スズキ純正部品の最安値を調べてください。\n'
+      +'品番: '+m.pn+'（ハイフンなし表記: '+compact+'）\n'
+      +(m.name?'部品名: '+m.name+'\n':'')
+      +'車両: スズキ カプチーノ EA11R（1992年式）\n'
+      +'必要数量: '+(m.qty||'1')+'\n'
+      +'配送先: 愛知県豊橋市\n'
+      +'条件: 商品価格だけでなく、送料・手数料・関税・転送費まで含めた支払総額で比較してください。新品純正、中古純正、再生品、社外互換品を混同せず分類してください。代替品番・統合品番がある場合は根拠も示してください。在庫、販売ページURL、支払総額、納期を表にし、最安を明示してください。見つからない場合は「見つからない」と明記し、似た別品番を最安として扱わないでください。';
+  }
+  function renderQuick(){
+    var box=$('quickList'); if(!box) return;
+    var list=loadMemos();
+    box.innerHTML='';
+    list.forEach(function(m){
+      var row=document.createElement('div'); row.className='qmemo';
+      var pn=document.createElement('span'); pn.className='pn'; pn.textContent=m.pn;
+      pn.title='タップで品番をコピー';
+      pn.addEventListener('click',function(){copyText(m.pn,'品番をコピーしました: '+m.pn);});
+      var go=document.createElement('button'); go.type='button'; go.className='go'; go.textContent='最安検索';
+      go.addEventListener('click',function(){
+        copyText(buildPrompt(m),'検索文をコピーしました。Geminiに貼ってください');
+        setTimeout(function(){window.open('https://gemini.google.com/app','_blank','noopener');},350);
+      });
+      var del=document.createElement('button'); del.type='button'; del.textContent='削除';
+      del.addEventListener('click',function(){
+        saveMemos(loadMemos().filter(function(x){return x.id!==m.id;}));
+        renderMemos(); renderQuick(); toast('削除しました');
+      });
+      row.appendChild(pn); row.appendChild(go); row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  function quickPreviewUpdate(){
+    var v=$('quickPn').value.trim();
+    var pv=$('quickPreview');
+    if(!v){pv.textContent=''; return;}
+    var f=formatSuzukiPn(v);
+    pv.textContent=(f!==v)?('→ '+f):('→ '+f+'（正式表記）');
+  }
+  $('quickPn').addEventListener('input',quickPreviewUpdate);
+  $('quickPaste').addEventListener('click',function(){
+    if(navigator.clipboard&&navigator.clipboard.readText){
+      navigator.clipboard.readText().then(function(t){
+        if(t){$('quickPn').value=t.trim(); quickPreviewUpdate();}
+        else{toast('コピーされている文字がありません');}
+      },function(){$('quickPn').focus(); toast('入力欄を長押しして「ペースト」してください');});
+    }else{$('quickPn').focus(); toast('入力欄を長押しして「ペースト」してください');}
+  });
+  $('quickGo').addEventListener('click',function(){
+    var pn=formatSuzukiPn($('quickPn').value.trim());
+    if(!pn){toast('品番を入れてください'); $('quickPn').focus(); return;}
+    var list=loadMemos().filter(function(x){return x.pn!==pn;});
+    var rec={id:'m'+Date.now(),pn:pn,name:'',qty:'1',car:'カプチーノ EA11R',note:''};
+    list.unshift(rec); saveMemos(list); renderMemos(); renderQuick();
+    $('quickPn').value=''; quickPreviewUpdate();
+    copyText(buildPrompt(rec),'保存しました。検索文をコピーしたので、Geminiに貼ってください');
+    setTimeout(function(){window.open('https://gemini.google.com/app','_blank','noopener');},350);
+  });
+  renderQuick();
+  /* 旧タブ画面はアーカイブへ移し、下部タブは廃止 */
+  var ab=$('archiveBody');
+  ['panel-home','panel-search','panel-memo','panel-mobile'].forEach(function(id){
+    var el=$(id); if(el&&ab) ab.appendChild(el);
+  });
+  var navEl=document.querySelector('nav.tabs'); if(navEl) navEl.remove();
+  document.body.style.paddingBottom='20px';
+
 })();
 </script>
 </body>
