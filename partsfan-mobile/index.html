@@ -131,8 +131,12 @@
       <div class="step">③ 下の特大ボタンを押す</div>
       <div class="arrow">↓</div>
       <div class="step">④ MegaZipで EA11Rの図面一覧（95件）が開く</div>
+      <div class="arrow">↓</div>
+      <div class="step">⑤ 図面番号から純正品番を特定して、品番メモに保存する</div>
+      <div class="arrow">↓</div>
+      <div class="step">⑥ Gemini等で、豊橋市までの送料込み最安値を探す</div>
     </div>
-    <p class="small">※ カタログの本命は MegaZip に切り替えました（2026-11-10検証済み: ログインなしで図面と品番が見え、同じ手順を2回再現）。PartSouqはスズキでエラーとループがあり不採用、partsfanは従来どおり参考リンクとして残しています。</p>
+    <p class="small">※ 目的はMegaZipで買うことではなく、<b>スズキ純正品番を特定すること</b>です。MegaZipはPartsFanとは別サイトですが、図面と品番の大元はスズキ純正カタログ（EPC）です。PartSouqはスズキでエラーとループがあり不採用、PartsFanは照合用として残しています。</p>
 
     <div class="mycar">
       <div class="maker">マイカー ・ SUZUKI</div>
@@ -142,7 +146,7 @@
       <a class="big-btn" href="https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1" target="_blank" rel="noopener">EA11Rの図面一覧を開く（MegaZip）→</a>
       <div class="row" style="margin-top:10px">
         <a class="btn" href="https://www.amayama.com/en/catalogs/suzuki/cappuccino/1-open-right-1991-2080" target="_blank" rel="noopener" style="background:transparent;color:#fff;border-color:#5b7186;text-decoration:none">Amayamaで開く（円価格）</a>
-        <a class="btn" href="https://partsfan.com/suzuki/" target="_blank" rel="noopener" style="background:transparent;color:#fff;border-color:#5b7186;text-decoration:none">partsfan（参考）</a>
+        <a class="btn" href="https://partsfan.com/suzuki/" target="_blank" rel="noopener" style="background:transparent;color:#fff;border-color:#5b7186;text-decoration:none">PartsFan（照合用）</a>
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn" type="button" id="editCarBtn" style="background:transparent;color:#fff;border-color:#5b7186">車体番号を入力・変更</button>
@@ -207,6 +211,7 @@
   <!-- ============ 品番メモ ============ -->
   <section class="panel" id="panel-memo">
     <h1>品番メモ</h1>
+    <div class="card"><b>使い方</b><br>① カタログで品番を特定する　→　② ここに保存する　→　③ メモ下の「Gemini用をコピー」を押す　→　④ Geminiに貼って、送料込み最安値を探す。<br><span class="small">MegaZipやAmayamaでは <b>1370080F00</b> のようにハイフンなしで表示される場合があります。正式表記 <b>13700-80F00</b> とハイフンなしの両方で検索するのが確実です。</span></div>
     <div class="notice">保存先は「この端末のブラウザの中」だけです。サーバーには送られません。別のスマホ・PCでは見えず、ブラウザのデータを消すとメモも消えます。</div>
 
     <div class="card">
@@ -566,11 +571,24 @@
         +(m.note?'<div class="meta">'+esc(m.note)+'</div>':'')
         +'<div class="acts">'
         +'<button class="btn" type="button" data-act="copy">コピー</button>'
+        +'<button class="btn" type="button" data-act="gemini">Gemini用をコピー</button>'
+        +'<a class="btn" target="_blank" rel="noopener" href="https://gemini.google.com/app">Geminiを開く</a>'
         +'<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+encodeURIComponent(m.pn)+'">Googleで検索</a>'
         +'<button class="btn" type="button" data-act="edit">編集</button>'
         +'<button class="btn" type="button" data-act="del">削除</button>'
         +'</div>';
       div.querySelector('[data-act="copy"]').addEventListener('click',function(){copyText(m.pn,'品番をコピーしました: '+m.pn);});
+      div.querySelector('[data-act="gemini"]').addEventListener('click',function(){
+        var compact=m.pn.replace(/[\s-]/g,'');
+        var prompt='スズキ純正部品の最安値を調べてください。\n'
+          +'品番: '+m.pn+'（ハイフンなし表記: '+compact+'）\n'
+          +(m.name?'部品名: '+m.name+'\n':'')
+          +'車両: スズキ カプチーノ EA11R（1992年式）\n'
+          +'必要数量: '+(m.qty||'1')+'\n'
+          +'配送先: 愛知県豊橋市\n'
+          +'条件: 商品価格だけでなく、送料・手数料・関税・転送費まで含めた支払総額で比較してください。新品純正、中古純正、再生品、社外互換品を混同せず分類してください。代替品番・統合品番がある場合は根拠も示してください。在庫、販売ページURL、支払総額、納期を表にし、最安を明示してください。見つからない場合は「見つからない」と明記し、似た別品番を最安として扱わないでください。';
+        copyText(prompt,'Gemini用の検索文をコピーしました');
+      });
       div.querySelector('[data-act="edit"]').addEventListener('click',function(){
         $('mId').value=m.id; $('mPn').value=m.pn; $('mName').value=m.name||'';
         $('mQty').value=m.qty||1; $('mCar').value=m.car||''; $('mNote').value=m.note||'';
