@@ -130,16 +130,20 @@
       <div class="arrow">↓</div>
       <div class="step">③ 下の特大ボタンを押す</div>
       <div class="arrow">↓</div>
-      <div class="step">④ partsfan が開く（自動でモバイル表示）</div>
+      <div class="step">④ MegaZipで EA11Rの図面一覧（95件）が開く</div>
     </div>
-    <p class="small">※ ④の「自動でモバイル表示」は、「モバイル化」タブの設定を1回済ませたあとの話です。設定前でも partsfan 自体は普通に開けます。</p>
+    <p class="small">※ カタログの本命は MegaZip に切り替えました（2026-11-10検証済み: ログインなしで図面と品番が見え、同じ手順を2回再現）。PartSouqはスズキでエラーとループがあり不採用、partsfanは従来どおり参考リンクとして残しています。</p>
 
     <div class="mycar">
       <div class="maker">マイカー ・ SUZUKI</div>
       <div class="name">カプチーノ</div>
       <div class="model">型式 EA11R</div>
       <p style="margin:10px 0 14px;font-size:14.5px;color:#c9d8e4">車体番号（フレーム番号）: <b id="chassisView" style="color:#fff">未登録</b></p>
-      <a class="big-btn" href="https://partsfan.com/suzuki/" target="_blank" rel="noopener">EA11Rで partsfan を開く →</a>
+      <a class="big-btn" href="https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1" target="_blank" rel="noopener">EA11Rの図面一覧を開く（MegaZip）→</a>
+      <div class="row" style="margin-top:10px">
+        <a class="btn" href="https://www.amayama.com/en/catalogs/suzuki/cappuccino/1-open-right-1991-2080" target="_blank" rel="noopener" style="background:transparent;color:#fff;border-color:#5b7186;text-decoration:none">Amayamaで開く（円価格）</a>
+        <a class="btn" href="https://partsfan.com/suzuki/" target="_blank" rel="noopener" style="background:transparent;color:#fff;border-color:#5b7186;text-decoration:none">partsfan（参考）</a>
+      </div>
       <div class="row" style="margin-top:10px">
         <button class="btn" type="button" id="editCarBtn" style="background:transparent;color:#fff;border-color:#5b7186">車体番号を入力・変更</button>
         <button class="btn" type="button" id="copyChassisBtn" style="background:transparent;color:#fff;border-color:#5b7186">車体番号をコピー</button>
@@ -147,12 +151,12 @@
       <div id="carForm" style="display:none;margin-top:12px">
         <label for="chassisInput" style="color:#fff;margin-top:0">車体番号（例: EA11R-○○○○○○）</label>
         <input type="text" id="chassisInput" placeholder="EA11R-" autocomplete="off" />
-        <p class="small" style="color:#9fb4c6">partsfanの車体番号検索で、そのまま貼り付けて使えます。入力した番号はこの端末の中にだけ保存されます。</p>
+        <p class="small" style="color:#9fb4c6">カタログ側の車体番号検索で、そのまま貼り付けて使えます。入力した番号はこの端末の中にだけ保存されます。</p>
         <button class="btn primary block" type="button" id="saveCarBtn" style="margin-top:8px">保存する</button>
       </div>
     </div>
 
-    <h2>メーカーから開く</h2>
+    <h2>メーカーから開く（partsfan・参考）</h2>
     <div class="grid" id="makerGridHome"></div>
 
     <h2>このページをホーム画面に追加する手順</h2>
