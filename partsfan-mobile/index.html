@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<meta name="theme-color" content="#14202e" />
+<!-- ホーム画面に追加したとき、全画面アプリとして開くための指定 -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PartsFan" />
+<link rel="icon" href="data:," />
+<title>PartsFan Mobile ホーム画面版</title>
+<style>
+  :root{
+    --bg:#f2f4f6; --surface:#ffffff; --surface2:#e8edf1; --ink:#17222d; --ink2:#54626f;
+    --line:#d3dbe2; --accent:#e8590c; --accent-ink:#ffffff; --accent-soft:#fdeee3;
+    --ok:#1c7c43; --ok-soft:#e2f3e8; --warn-soft:#fff3d6; --warn-ink:#7a5b00;
+    --nav-bg:#14202e; --nav-ink:#c7d2dd; --nav-on:#ffffff;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e151d; --surface:#18222d; --surface2:#212e3b; --ink:#eef3f7; --ink2:#a7b6c2;
+      --line:#2e3d4b; --accent:#f0762a; --accent-soft:#3a2415;
+      --ok:#4cc07a; --ok-soft:#173325; --warn-soft:#3a2f10; --warn-ink:#f0d48a;
+      --nav-bg:#0a1017; --nav-ink:#8fa2b2; --nav-on:#ffffff;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,system-ui,sans-serif;
+    font-size:16px;line-height:1.65;padding-bottom:calc(84px + env(safe-area-inset-bottom));}
+  main{max-width:640px;margin:0 auto;padding:16px 14px 28px}
+  h1{font-size:22px;line-height:1.35;margin:0 0 4px}
+  h2{font-size:19px;line-height:1.4;margin:26px 0 10px;padding-left:10px;border-left:5px solid var(--accent)}
+  h3{font-size:16px;margin:18px 0 8px}
+  p{margin:8px 0}
+  .small{font-size:13.5px;color:var(--ink2)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin:12px 0}
+  .flow{display:flex;flex-direction:column;gap:0;margin:10px 0 2px}
+  .flow .step{background:var(--surface2);border-radius:10px;padding:10px 14px;font-weight:700;text-align:center;font-size:15.5px}
+  .flow .arrow{text-align:center;color:var(--accent);font-size:18px;line-height:1.3;font-weight:900}
+  .mycar{background:var(--nav-bg);color:#fff;border-radius:var(--radius);padding:18px 16px;margin:12px 0}
+  .mycar .maker{font-size:13px;letter-spacing:.12em;color:#9fb4c6;font-weight:700}
+  .mycar .name{font-size:26px;font-weight:900;line-height:1.3;margin:2px 0}
+  .mycar .model{font-size:17px;color:#dbe6ef}
+  .big-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:64px;
+    background:var(--accent);color:var(--accent-ink);border:none;border-radius:12px;
+    font-size:20px;font-weight:900;text-decoration:none;padding:14px;cursor:pointer;text-align:center}
+  .big-btn:active{opacity:.85}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:10px 16px;
+    border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    font-size:15.5px;font-weight:700;cursor:pointer;text-decoration:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.block{width:100%}
+  .btn:active{opacity:.8}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+  .tile{display:flex;flex-direction:column;justify-content:center;min-height:76px;padding:12px 14px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    text-decoration:none;color:var(--ink)}
+  .tile b{font-size:19px;line-height:1.3}
+  .tile span{font-size:13px;color:var(--ink2)}
+  .tile:active{background:var(--accent-soft)}
+  label{display:block;font-weight:700;font-size:14.5px;margin:14px 0 4px}
+  input[type="text"],input[type="number"],textarea,select{
+    width:100%;min-height:48px;padding:10px 12px;font-size:17px;border:1px solid var(--line);
+    border-radius:10px;background:var(--surface);color:var(--ink);font-family:inherit}
+  textarea{min-height:76px;resize:vertical}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .steps{list-style:none;counter-reset:st;margin:10px 0;padding:0}
+  .steps li{counter-increment:st;position:relative;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);padding:14px 14px 12px 52px;margin:10px 0}
+  .steps li::before{content:counter(st);position:absolute;left:12px;top:12px;width:30px;height:30px;
+    background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:16px}
+  .steps .t{font-weight:800;font-size:16px}
+  .ok{display:block;margin-top:6px;background:var(--ok-soft);color:var(--ok);border-radius:8px;
+    padding:8px 10px;font-size:14px;font-weight:700}
+  .help{display:block;margin-top:6px;background:var(--warn-soft);color:var(--warn-ink);border-radius:8px;
+    padding:8px 10px;font-size:14px}
+  .term{background:var(--surface2);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14.5px}
+  .term b{color:var(--accent)}
+  table.trouble{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0}
+  table.trouble th,table.trouble td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  table.trouble th{background:var(--surface2);white-space:nowrap}
+  pre.code{background:#0d141b;color:#d7e6f2;border-radius:10px;padding:12px;font-size:11.5px;line-height:1.5;
+    overflow-x:auto;white-space:pre;max-height:300px;overflow-y:auto}
+  .memo-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:10px 0}
+  .memo-item .pn{font-size:20px;font-weight:900;letter-spacing:.02em;word-break:break-all}
+  .memo-item .meta{font-size:14px;color:var(--ink2);margin-top:2px}
+  .memo-item .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .memo-item .acts .btn{min-height:44px;padding:8px 14px;font-size:14.5px}
+  .notice{background:var(--warn-soft);color:var(--warn-ink);border-radius:10px;padding:12px 14px;font-size:14.5px;font-weight:700;margin:12px 0}
+  .empty{color:var(--ink2);text-align:center;padding:22px 0;font-size:15px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));
+    background:var(--nav-bg);color:#fff;padding:12px 20px;border-radius:999px;font-weight:800;font-size:15px;
+    opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;max-width:92vw;text-align:center}
+  .toast.show{opacity:1}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--nav-bg);z-index:50;
+    padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 12px rgba(0,0,0,.25)}
+  nav.tabs .inner{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+  nav.tabs button{background:none;border:none;color:var(--nav-ink);min-height:64px;padding:8px 2px 6px;
+    font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.3}
+  nav.tabs button .ic{display:block;font-size:21px;line-height:1.25}
+  nav.tabs button[aria-selected="true"]{color:var(--nav-on);box-shadow:inset 0 3px 0 var(--accent)}
+  .panel{display:none}
+  .panel.on{display:block}
+  .share-ic{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:2px solid currentColor;
+    border-radius:5px;font-size:14px;font-weight:900;vertical-align:-6px;margin:0 2px}
+  details{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:6px 16px;margin:12px 0}
+  summary{min-height:48px;display:flex;align-items:center;font-weight:800;cursor:pointer;font-size:15.5px}
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ============ ホーム ============ -->
+  <section class="panel on" id="panel-home">
+    <h1>ホーム画面のアイコンから、1タップで部品カタログへ</h1>
+    <p class="small">このページ自体がホーム画面に置けます。下の「追加の手順」どおりに1回だけ設定すれば、以後はアイコンを押すだけでこのページが全画面で開きます。</p>
+
+    <div class="flow" aria-label="毎日の流れ">
+      <div class="step">① ホーム画面のアイコンを押す</div>
+      <div class="arrow">↓</div>
+      <div class="step">② このページが開く</div>
+      <div class="arrow">↓</div>
+      <div class="step">③ 下の特大ボタンを押す</div>
+      <div class="arrow">↓</div>
+      <div class="step">④ partsfan が開く（自動でモバイル表示）</div>
+    </div>
+    <p class="small">※ ④の「自動でモバイル表示」は、「モバイル化」タブの設定を1回済ませたあとの話です。設定前でも partsfan 自体は普通に開けます。</p>
+
+    <div class="mycar">
+      <div class="maker">マイカー ・ SUZUKI</div>
+      <div class="name">カプチーノ</div>
+      <div class="model">型式 EA11R</div>
+      <p style="margin:10px 0 14px;font-size:14.5px;color:#c9d8e4">車体番号（フレーム番号）: <b id="chassisView" style="color:#fff">未登録</b></p>
+      <a class="big-btn" href="https://partsfan.com/suzuki/" target="_blank" rel="noopener">EA11Rで partsfan を開く →</a>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" type="button" id="editCarBtn" style="background:transparent;color:#fff;border-color:#5b7186">車体番号を入力・変更</button>
+        <button class="btn" type="button" id="copyChassisBtn" style="background:transparent;color:#fff;border-color:#5b7186">車体番号をコピー</button>
+      </div>
+      <div id="carForm" style="display:none;margin-top:12px">
+        <label for="chassisInput" style="color:#fff;margin-top:0">車体番号（例: EA11R-○○○○○○）</label>
+        <input type="text" id="chassisInput" placeholder="EA11R-" autocomplete="off" />
+        <p class="small" style="color:#9fb4c6">partsfanの車体番号検索で、そのまま貼り付けて使えます。入力した番号はこの端末の中にだけ保存されます。</p>
+        <button class="btn primary block" type="button" id="saveCarBtn" style="margin-top:8px">保存する</button>
+      </div>
+    </div>
+
+    <h2>メーカーから開く</h2>
+    <div class="grid" id="makerGridHome"></div>
+
+    <h2>このページをホーム画面に追加する手順</h2>
+    <p>置くのは <b>このページ</b> です。Museアプリの中からではなく、<b>Safariで開いた状態</b>で作業するのがコツです。</p>
+    <ol class="steps">
+      <li><span class="t">このページを Safari で開く</span><br>
+        いま Muse アプリの中で見ている場合は、このページのリンク（親記事・カードの共有先URL）をコピーして、Safariのアドレス欄に貼り付けて開いてください。
+        <span class="ok">正解の目印: Safariの画面下（または上）にアドレス欄が見え、このページが表示されている</span>
+        <span class="help">うまくいかないときは: Museアプリの共有メニューに「Safariで開く」はありません。出てこなくて正常です。リンクをコピー → Safariに貼り付け、で開いてください。</span></li>
+      <li><span class="t">画面下の共有ボタンを押す</span><br>
+        Safariの下部にある、四角から上向き矢印が出ているマーク <span class="share-ic">↑</span> を押します。
+        <span class="ok">正解の目印: 下からメニューの一覧がせり上がってくる</span></li>
+      <li><span class="t">メニューを下へ送り、「ホーム画面に追加」を押す</span><br>
+        メニューを指で上にすべらせてスクロールすると、「ホーム画面に追加」という項目が出てきます。
+        <span class="ok">正解の目印: 名前とアイコンの確認画面に切り替わる</span>
+        <span class="help">うまくいかないときは: 項目が見当たらない場合は、メニューを一番下まで送ってください。それでも無い場合は Safari 以外のブラウザで開いている可能性があります。手順1からやり直してください。</span></li>
+      <li><span class="t">名前を確認して、右上の「追加」を押す</span><br>
+        名前は「PartsFan」のままでも、短く変えても構いません。
+        <span class="ok">正解の目印: 画面が閉じて、iPhoneのホーム画面にアイコンが1つ増える</span></li>
+      <li><span class="t">アイコンを押して試す</span><br>
+        増えたアイコンを押してください。
+        <span class="ok">正解の目印: Safariのアドレス欄なしで、このページが全画面で開けば成功です</span></li>
+    </ol>
+  </section>
+
+  <!-- ============ 探す ============ -->
+  <section class="panel" id="panel-search">
+    <h1>探す</h1>
+    <p>メーカーを選んで入口を開きます。車体番号・型式は、コピーして partsfan 側の検索欄に貼る使い方です（partsfanの検索は本体側でのみ動きます）。</p>
+
+    <div class="card">
+      <label for="frameInput" style="margin-top:0">車体番号（フレーム番号）</label>
+      <input type="text" id="frameInput" placeholder="例: EA11R-123456" autocomplete="off" />
+      <label for="frameMaker">メーカー</label>
+      <select id="frameMaker"></select>
+      <div class="row" style="margin-top:14px">
+        <button class="btn" type="button" id="copyFrameBtn">番号をコピー</button>
+        <button class="btn primary" type="button" id="openFrameBtn">入口を開く →</button>
+      </div>
+      <p class="small">流れ: 番号をコピー → 入口を開く → partsfan側の車体番号検索に貼り付け。</p>
+    </div>
+
+    <h2>メーカー入口（8メーカー）</h2>
+    <div class="grid" id="makerGridSearch"></div>
+    <p class="small">各タイルは partsfan.com のメーカー別入口ページ（公式サイト）を新しいタブで開きます。分解図の表示には partsfan 側でのログインが必要です。</p>
+  </section>
+
+  <!-- ============ 品番メモ ============ -->
+  <section class="panel" id="panel-memo">
+    <h1>品番メモ</h1>
+    <div class="notice">保存先は「この端末のブラウザの中」だけです。サーバーには送られません。別のスマホ・PCでは見えず、ブラウザのデータを消すとメモも消えます。</div>
+
+    <div class="card">
+      <label for="mPn" style="margin-top:0">品番 <span style="color:var(--accent)">*必須</span></label>
+      <input type="text" id="mPn" placeholder="例: 18117-64D01" autocomplete="off" />
+      <label for="mName">部品名</label>
+      <input type="text" id="mName" placeholder="例: ISCバルブ" autocomplete="off" />
+      <div class="row">
+        <div><label for="mQty">数量</label><input type="number" id="mQty" min="1" value="1" /></div>
+        <div><label for="mCar">車両</label><input type="text" id="mCar" value="カプチーノ EA11R" /></div>
+      </div>
+      <label for="mNote">メモ</label>
+      <textarea id="mNote" placeholder="例: 中古インマニ一式に付属していたもの"></textarea>
+      <input type="hidden" id="mId" />
+      <button class="btn primary block" type="button" id="saveMemoBtn" style="margin-top:14px">メモを保存する</button>
+      <button class="btn block" type="button" id="cancelEditBtn" style="margin-top:8px;display:none">編集をやめる</button>
+    </div>
+
+    <label for="memoSearch">メモを探す</label>
+    <input type="text" id="memoSearch" placeholder="品番・部品名で絞り込み" autocomplete="off" />
+    <div id="memoList"></div>
+  </section>
+
+  <!-- ============ モバイル化 ============ -->
+  <section class="panel" id="panel-mobile">
+    <h1>モバイル化（自動で効く仕組み）</h1>
+    <p>partsfan のページは小さいままですが、<b>一度だけ設定</b>しておけば、以後は partsfan の全ページが自動で大きく見やすい表示になります。ページごとにボタンを押す必要はありません。</p>
+
+    <div class="term">
+      <p style="margin:0 0 6px"><b>ユーザースクリプト</b> ＝ ブラウザに「このサイトでは、この見た目の直し方を自動でやって」と頼む命令文のこと。</p>
+      <p style="margin:0 0 6px"><b>コード</b> ＝ その命令文の文字列。コピーして道具アプリに貼るだけで使えます。中身を読む必要はありません。</p>
+      <p style="margin:0 0 6px"><b>拡張機能</b> ＝ Safariに追加する小さな道具のこと。設定アプリで「許可」を出す必要があります。</p>
+      <p style="margin:0"><b>コピー／ペースト</b> ＝ コピー＝文字列をiPhoneに覚えさせること。ペースト（貼り付け）＝覚えた文字列を別の場所に出すこと。</p>
+    </div>
+
+    <h2>やること全体の地図</h2>
+    <div class="flow">
+      <div class="step">A. コードをコピーする（1分）</div>
+      <div class="arrow">↓</div>
+      <div class="step">B. 無料アプリ「Userscripts」を入れる（2分）</div>
+      <div class="arrow">↓</div>
+      <div class="step">C. Safariに許可を出す（1分）</div>
+      <div class="arrow">↓</div>
+      <div class="step">D. コードを貼って保存する（1分）</div>
+      <div class="arrow">↓</div>
+      <div class="step">E. 成功を確認する（1分）</div>
+    </div>
+
+    <h2>A. コードをコピーする</h2>
+    <ol class="steps">
+      <li><span class="t">下の大きなボタンを押す</span><br>
+        この下にある「コードをコピーする」ボタンを押してください。
+        <span class="ok">正解の目印: ボタンの文字が「コピーしました」に変わる。これで命令文がiPhoneに覚えられました。ここではまだ何も起きなくて正常です</span></li>
+    </ol>
+    <button class="btn primary block" type="button" id="copyUsBtn" style="min-height:60px;font-size:18px">コードをコピーする</button>
+    <details>
+      <summary>コードの中身を見る（読まなくてOK）</summary>
+      <pre class="code" id="usView"></pre>
+    </details>
+
+    <h2>B. 道具アプリを入れる</h2>
+    <ol class="steps">
+      <li><span class="t">App Store を開く</span><br>
+        青い「A」のマークのアプリを開き、下の検索タブを押します。</li>
+      <li><span class="t">「Userscripts」と検索して入れる</span><br>
+        検索欄に Userscripts と入れ、無料アプリ「Userscripts」の「入手」を押します。料金はかかりません。
+        <span class="ok">正解の目印: ボタンが「開く」に変わればインストール完了</span></li>
+      <li><span class="t">一度だけアプリを開いて、すぐ閉じる</span><br>
+        「Userscripts」を1回開いてから閉じてください。一度開くことで準備が完了します。</li>
+    </ol>
+
+    <h2>C. Safariに許可を出す</h2>
+    <ol class="steps">
+      <li><span class="t">「設定」アプリ（歯車マーク）を開く</span></li>
+      <li><span class="t">下へ送って「Safari」を押す</span></li>
+      <li><span class="t">「拡張機能」を押す</span><br>
+        Safariの設定の中にあります。下の方へ送ると出てきます。</li>
+      <li><span class="t">「Userscripts」のスイッチをオンにする</span>
+        <span class="ok">正解の目印: スイッチが緑色になれば許可は完了</span>
+        <span class="help">うまくいかないときは: 一覧にUserscriptsが出ない場合は、Bの「一度開く」をやっていない可能性があります。アプリを開いてから戻ってきてください。</span></li>
+    </ol>
+
+    <h2>D. コードを貼って保存する</h2>
+    <ol class="steps">
+      <li><span class="t">「Userscripts」アプリをもう一度開く</span></li>
+      <li><span class="t">新規作成のボタンを押す</span><br>
+        「＋」や「新規」と書かれたボタンを押します。
+        <span class="ok">正解の目印: 白い大きな入力欄が現れる</span></li>
+      <li><span class="t">入力欄を長押しして「ペースト」を押す</span><br>
+        白い入力欄を指で1秒ほど押し続けると、「ペースト（貼り付け）」というメニューが出ます。それを押します。
+        <span class="ok">正解の目印: 入力欄が英語と記号の長い文字列で埋まる</span>
+        <span class="help">うまくいかないときは: 何も出ない・空っぽの場合は、Aのコピーが別の文字で上書きされています。このページに戻って、もう一度「コードをコピーする」を押してから、すぐ貼り付け直してください。</span></li>
+      <li><span class="t">保存ボタンを押す</span><br>
+        「Save」や「保存」と書かれたボタンを押します。
+        <span class="ok">正解の目印: スクリプトの一覧に1件増える</span>
+        <span class="help">うまくいかないときは: 保存を押さずに閉じると消えます。「保存したはずが消えた」ときは、このDをもう一度やってください。</span></li>
+    </ol>
+
+    <h2>E. 成功の確認</h2>
+    <ol class="steps">
+      <li><span class="t">Safariで partsfan.com を開いてログインする</span></li>
+      <li><span class="t">車種のページなど、中のページまで進む</span>
+        <span class="ok">正解の目印: 何もボタンを押していないのに、文字が大きく、横長の表が縦並びのカードになっていれば成功</span></li>
+      <li><span class="t">ページを移動してみる</span>
+        <span class="ok">正解の目印: 移動先も自動で大きく表示されれば完璧です</span>
+        <span class="help">うまくいかないときは: 大きくならない場合は、Cのスイッチが緑色（オン）かを確認してください。</span></li>
+    </ol>
+
+    <h2>モバイル化で変わること</h2>
+    <div class="card">
+      <p style="margin-top:0">・文字が16px以上に拡大される<br>
+      ・横長の部品表が、縦積みのカード表示に変わる<br>
+      ・リンクやボタンの押せる範囲が44px以上になる<br>
+      ・分解図が画面幅いっぱいに広がり、タップでさらに拡大する<br>
+      ・品番をタップすると、その場でコピーできる</p>
+    </div>
+
+    <h2>こまったときは</h2>
+    <table class="trouble">
+      <tr><th>症状</th><th>見る場所</th></tr>
+      <tr><td>大きくならない</td><td>Cのスイッチがオン（緑）になっているか</td></tr>
+      <tr><td>貼り付けで何も出ない</td><td>Aのコピーをやり直す（他の文字をコピーすると上書きされます）</td></tr>
+      <tr><td>保存したはずが消えた</td><td>Dの保存ボタンの押し忘れ。再登録してください</td></tr>
+      <tr><td>ボタンの名前が少し違う</td><td>アプリの版の違いです。同じ意味の言葉（新規／＋／Save）を探してください</td></tr>
+    </table>
+
+    <details>
+      <summary>予備の方法: ブックマークレット（ページごとに1タップ）</summary>
+      <p class="small">自動適用がどうしても使えない場合の予備です。ページを移動するたびにブックマークから実行する必要があります。通常は使いません。</p>
+      <button class="btn block" type="button" id="copyBmBtn">ブックマークレットのコードをコピー</button>
+      <p class="small">登録方法: Safariで適当なページをブックマークに保存 → ブックマークを編集し、URL欄を消してこのコード（javascript: で始まる文字列）を貼り付け → partsfanのページでそのブックマークを開く。</p>
+    </details>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<nav class="tabs" aria-label="メインメニュー">
+  <div class="inner">
+    <button type="button" data-tab="home" aria-selected="true"><span class="ic">⌂</span>ホーム</button>
+    <button type="button" data-tab="search" aria-selected="false"><span class="ic">⌕</span>探す</button>
+    <button type="button" data-tab="memo" aria-selected="false"><span class="ic">✎</span>品番メモ</button>
+    <button type="button" data-tab="mobile" aria-selected="false"><span class="ic">▣</span>モバイル化</button>
+  </div>
+</nav>
+
+<!-- ユーザースクリプト全文（実行はされず、コピー元として保持） -->
+<script type="text/plain" id="userscript-source">// ==UserScript==
+// @name         PartsFan Mobile Fix
+// @namespace    partsfan-mobile
+// @version      1.0
+// @description  partsfan.com を iPhone で見やすくする（文字拡大・部品表カード化・分解図全幅・品番コピー）
+// @match        https://partsfan.com/*
+// @match        http://partsfan.com/*
+// @run-at       document-idle
+// @grant        none
+// ==/UserScript==
+
+(function () {
+  'use strict';
+  if (window.__pfMobileFix) return;
+  window.__pfMobileFix = true;
+
+  // 1) viewport: スマホ幅で表示する
+  var vp = document.querySelector('meta[name="viewport"]');
+  if (!vp) {
+    vp = document.createElement('meta');
+    vp.name = 'viewport';
+    document.head.appendChild(vp);
+  }
+  vp.setAttribute('content', 'width=device-width, initial-scale=1');
+
+  // 2) 見た目の直し方（CSS）を流し込む
+  var css = ''
+    + 'html{-webkit-text-size-adjust:100%}'
+    + 'body{font-size:17px !important;line-height:1.6 !important}'
+    + 'p,li,td,th,div,span{font-size:max(16px,1em)}'
+    + 'a,button,input,select,[role="button"]{min-height:44px}'
+    + 'a{display:inline-flex;align-items:center;padding:6px 4px}'
+    + 'img{max-width:100% !important;height:auto !important}'
+    // 横長の部品表を縦積みカードにする
+    + '@media (max-width:760px){'
+    + '  table,thead,tbody,tr,td{display:block !important;width:auto !important}'
+    + '  thead{display:none !important}'
+    + '  tr{border:1px solid #bbb;border-radius:10px;margin:10px 0;padding:8px 10px;background:#fff}'
+    + '  td{border:none !important;padding:4px 0 !important;text-align:left !important}'
+    + '}'
+    // 分解図を画面幅いっぱいに
+    + '.pf-diagram{width:100% !important;max-width:100% !important}'
+    + '.pf-diagram-zoom{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;'
+    + '  overflow:auto;display:flex;align-items:flex-start;justify-content:center}'
+    + '.pf-diagram-zoom img{width:200% !important;max-width:none !important}'
+    + '.pf-copied{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);'
+    + '  background:#14202e;color:#fff;padding:10px 18px;border-radius:999px;z-index:99999;font-size:15px}';
+  var style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  function toast(msg) {
+    var t = document.createElement('div');
+    t.className = 'pf-copied';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 1600);
+  }
+
+  // 3) 分解図らしい大きな画像: 全幅 + タップで拡大/戻す
+  document.querySelectorAll('img').forEach(function (img) {
+    if (img.naturalWidth >= 400 || img.width >= 400) {
+      img.classList.add('pf-diagram');
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', function () {
+        var wrap = document.querySelector('.pf-diagram-zoom');
+        if (wrap) { wrap.remove(); return; }
+        var w = document.createElement('div');
+        w.className = 'pf-diagram-zoom';
+        var c = img.cloneNode();
+        w.appendChild(c);
+        w.addEventListener('click', function () { w.remove(); });
+        document.body.appendChild(w);
+      });
+    }
+  });
+
+  // 4) 品番らしい文字列をタップでコピー
+  var pnRe = /^[0-9A-Za-z]{4,}-[0-9A-Za-z]{3,}$/;
+  document.querySelectorAll('td, span, div').forEach(function (el) {
+    if (el.children.length) return;
+    var txt = (el.textContent || '').trim();
+    if (pnRe.test(txt)) {
+      el.style.cursor = 'pointer';
+      el.style.textDecoration = 'underline dotted';
+      el.title = 'タップで品番をコピー';
+      el.addEventListener('click', function () {
+        function done() { toast('品番をコピーしました: ' + txt); }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(done, done);
+        } else { done(); }
+      });
+    }
+  });
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+  var MAKERS=[
+    {jp:'トヨタ',en:'toyota'},{jp:'日産',en:'nissan'},{jp:'ホンダ',en:'honda'},{jp:'マツダ',en:'mazda'},
+    {jp:'三菱',en:'mitsubishi'},{jp:'スバル',en:'subaru'},{jp:'スズキ',en:'suzuki'},{jp:'ダイハツ',en:'daihatsu'}
+  ];
+  function makerUrl(en){return 'https://partsfan.com/'+en+'/';}
+  function $(id){return document.getElementById(id);}
+  var toastTimer=null;
+  function toast(msg){
+    var t=$('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove('show');},2200);
+  }
+  function copyText(text,okMsg){
+    function fallback(){
+      var ta=document.createElement('textarea'); ta.value=text;
+      ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try{document.execCommand('copy'); toast(okMsg);}catch(e){toast('コピーできませんでした。長押しでコピーしてください');}
+      ta.remove();
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){toast(okMsg);},fallback);
+    }else{fallback();}
+  }
+
+  /* タブ切替 */
+  var tabBtns=document.querySelectorAll('nav.tabs button');
+  tabBtns.forEach(function(b){
+    b.addEventListener('click',function(){
+      tabBtns.forEach(function(x){x.setAttribute('aria-selected','false');});
+      b.setAttribute('aria-selected','true');
+      document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+      $('panel-'+b.getAttribute('data-tab')).classList.add('on');
+      window.scrollTo(0,0);
+    });
+  });
+
+  /* メーカータイル */
+  function fillGrid(el){
+    MAKERS.forEach(function(m){
+      var a=document.createElement('a');
+      a.className='tile'; a.href=makerUrl(m.en); a.target='_blank'; a.rel='noopener';
+      a.innerHTML='<b></b><span></span>';
+      a.querySelector('b').textContent=m.jp;
+      a.querySelector('span').textContent='partsfan.com/'+m.en+'/';
+      el.appendChild(a);
+    });
+  }
+  fillGrid($('makerGridHome')); fillGrid($('makerGridSearch'));
+  var sel=$('frameMaker');
+  MAKERS.forEach(function(m){
+    var o=document.createElement('option'); o.value=m.en; o.textContent=m.jp;
+    if(m.en==='suzuki')o.selected=true; sel.appendChild(o);
+  });
+
+  /* マイカー（車体番号のみ、この端末に保存） */
+  var CH_KEY='pfh_chassis_v1';
+  function chassis(){ try{return localStorage.getItem(CH_KEY)||'';}catch(e){return '';} }
+  function renderChassis(){
+    var v=chassis();
+    $('chassisView').textContent=v?v:'未登録';
+  }
+  renderChassis();
+  $('editCarBtn').addEventListener('click',function(){
+    var f=$('carForm'); var open=f.style.display!=='none';
+    f.style.display=open?'none':'block';
+    if(!open)$('chassisInput').value=chassis();
+  });
+  $('saveCarBtn').addEventListener('click',function(){
+    var v=$('chassisInput').value.trim();
+    try{localStorage.setItem(CH_KEY,v);}catch(e){}
+    renderChassis(); $('carForm').style.display='none';
+    toast(v?'車体番号を保存しました':'車体番号を消しました');
+  });
+  $('copyChassisBtn').addEventListener('click',function(){
+    var v=chassis();
+    if(!v){toast('車体番号が未登録です。先に入力してください');return;}
+    copyText(v,'車体番号をコピーしました');
+  });
+
+  /* 探すタブ */
+  $('copyFrameBtn').addEventListener('click',function(){
+    var v=$('frameInput').value.trim();
+    if(!v){toast('車体番号を入力してください');return;}
+    copyText(v,'車体番号をコピーしました');
+  });
+  $('openFrameBtn').addEventListener('click',function(){
+    window.open(makerUrl(sel.value),'_blank','noopener');
+  });
+
+  /* 品番メモ（この端末のブラウザ保存） */
+  var MEMO_KEY='pfh_memos_v1';
+  function loadMemos(){ try{return JSON.parse(localStorage.getItem(MEMO_KEY)||'[]');}catch(e){return [];} }
+  function saveMemos(list){ try{localStorage.setItem(MEMO_KEY,JSON.stringify(list));}catch(e){toast('保存できませんでした（ブラウザの空き容量不足の可能性）');} }
+  function esc(s){var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML;}
+  function renderMemos(){
+    var q=($('memoSearch').value||'').toLowerCase();
+    var list=loadMemos().filter(function(m){
+      return !q || (m.pn+' '+m.name).toLowerCase().indexOf(q)>=0;
+    });
+    var box=$('memoList'); box.innerHTML='';
+    if(!list.length){
+      box.innerHTML='<p class="empty">'+(q?'条件に合うメモがありません':'まだメモがありません。上のフォームから最初の1件を保存してください')+'</p>';
+      return;
+    }
+    list.forEach(function(m){
+      var div=document.createElement('div'); div.className='memo-item';
+      div.innerHTML='<div class="pn">'+esc(m.pn)+'</div>'
+        +(m.name?'<div style="font-weight:700">'+esc(m.name)+'</div>':'')
+        +'<div class="meta">数量: '+esc(m.qty||'1')+'　車両: '+esc(m.car||'—')+'</div>'
+        +(m.note?'<div class="meta">'+esc(m.note)+'</div>':'')
+        +'<div class="acts">'
+        +'<button class="btn" type="button" data-act="copy">コピー</button>'
+        +'<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+encodeURIComponent(m.pn)+'">Googleで検索</a>'
+        +'<button class="btn" type="button" data-act="edit">編集</button>'
+        +'<button class="btn" type="button" data-act="del">削除</button>'
+        +'</div>';
+      div.querySelector('[data-act="copy"]').addEventListener('click',function(){copyText(m.pn,'品番をコピーしました: '+m.pn);});
+      div.querySelector('[data-act="edit"]').addEventListener('click',function(){
+        $('mId').value=m.id; $('mPn').value=m.pn; $('mName').value=m.name||'';
+        $('mQty').value=m.qty||1; $('mCar').value=m.car||''; $('mNote').value=m.note||'';
+        $('saveMemoBtn').textContent='変更を保存する'; $('cancelEditBtn').style.display='block';
+        window.scrollTo(0,0);
+      });
+      div.querySelector('[data-act="del"]').addEventListener('click',function(){
+        saveMemos(loadMemos().filter(function(x){return x.id!==m.id;}));
+        renderMemos(); toast('メモを削除しました');
+      });
+      box.appendChild(div);
+    });
+  }
+  function resetMemoForm(){
+    $('mId').value=''; $('mPn').value=''; $('mName').value=''; $('mQty').value='1';
+    $('mCar').value='カプチーノ EA11R'; $('mNote').value='';
+    $('saveMemoBtn').textContent='メモを保存する'; $('cancelEditBtn').style.display='none';
+  }
+  $('saveMemoBtn').addEventListener('click',function(){
+    var pn=$('mPn').value.trim();
+    if(!pn){toast('品番を入力してください'); $('mPn').focus(); return;}
+    var list=loadMemos(); var id=$('mId').value;
+    var rec={pn:pn,name:$('mName').value.trim(),qty:$('mQty').value||'1',car:$('mCar').value.trim(),note:$('mNote').value.trim()};
+    if(id){
+      list=list.map(function(x){ if(x.id===id){rec.id=id; return rec;} return x; });
+      toast('メモを更新しました');
+    }else{
+      rec.id='m'+Date.now(); list.unshift(rec);
+      toast('メモを保存しました（この端末内）');
+    }
+    saveMemos(list); resetMemoForm(); renderMemos();
+  });
+  $('cancelEditBtn').addEventListener('click',resetMemoForm);
+  $('memoSearch').addEventListener('input',renderMemos);
+  renderMemos();
+
+  /* モバイル化: コード表示とコピー */
+  var usText=$('userscript-source').textContent.replace(/^\n+/,'');
+  $('usView').textContent=usText;
+  $('copyUsBtn').addEventListener('click',function(){
+    var b=$('copyUsBtn');
+    copyText(usText,'コードをコピーしました');
+    b.textContent='コピーしました ✓';
+    setTimeout(function(){b.textContent='コードをコピーする';},2600);
+  });
+  /* 予備: ブックマークレット */
+  var core=usText.replace(/\/\/ ==UserScript==[\s\S]*?\/\/ ==\/UserScript==/,'').trim();
+  var bookmarklet='javascript:'+encodeURIComponent(core);
+  $('copyBmBtn').addEventListener('click',function(){ copyText(bookmarklet,'ブックマークレットをコピーしました'); });
+})();
+</script>
+</body>
+</html>
