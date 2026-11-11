@@ -1,0 +1,132 @@
+{
+ "entries": [
+  {
+   "n": 9,
+   "q": "ヘッドカバーのガスケットがほしい。オイル漏れしてる",
+   "a": "AI接続エラー。候補から機械的に表示します。",
+   "ai": false,
+   "picks": [
+    {
+     "pn": "11141-81401",
+     "name": "Gasket,CylinderHead",
+     "diagram": "シリンダーヘッド",
+     "uid": "23053200_1",
+     "ref": "8",
+     "sup": [],
+     "mono": {
+      "price": 2390,
+      "maker": "K.Pガスケット",
+      "stock": "当日出荷",
+      "unit": "1枚"
+     }
+    },
+    {
+     "pn": "11141-81401",
+     "name": "Gasket,CylinderHead",
+     "diagram": "シリンダーヘッド",
+     "uid": "23053200_1",
+     "ref": "8",
+     "sup": [],
+     "mono": {
+      "price": 2390,
+      "maker": "K.Pガスケット",
+      "stock": "当日出荷",
+      "unit": "1枚"
+     }
+    },
+    {
+     "pn": "35179-80F00",
+     "name": "Socket Cover Assy,Headlamp",
+     "diagram": "フロントランプ",
+     "uid": "23053232_38",
+     "ref": "7",
+     "sup": [],
+     "mono": null
+    },
+    {
+     "pn": "11110-53A05",
+     "name": "Head, Cylinder",
+     "diagram": "シリンダーヘッド",
+     "uid": "23053200_1",
+     "ref": "1",
+     "sup": [],
+     "mono": null
+    },
+    {
+     "pn": "11117-52E10",
+     "name": "Bolt,CylinderHead",
+     "diagram": "シリンダーヘッド",
+     "uid": "23053200_1",
+     "ref": "6",
+     "sup": [],
+     "mono": null
+    }
+   ],
+   "at": "2026-11-11T10:00:40.474Z"
+  }
+ ],
+ "latest": {
+  "n": 9,
+  "q": "ヘッドカバーのガスケットがほしい。オイル漏れしてる",
+  "a": "AI接続エラー。候補から機械的に表示します。",
+  "ai": false,
+  "picks": [
+   {
+    "pn": "11141-81401",
+    "name": "Gasket,CylinderHead",
+    "diagram": "シリンダーヘッド",
+    "uid": "23053200_1",
+    "ref": "8",
+    "sup": [],
+    "mono": {
+     "price": 2390,
+     "maker": "K.Pガスケット",
+     "stock": "当日出荷",
+     "unit": "1枚"
+    }
+   },
+   {
+    "pn": "11141-81401",
+    "name": "Gasket,CylinderHead",
+    "diagram": "シリンダーヘッド",
+    "uid": "23053200_1",
+    "ref": "8",
+    "sup": [],
+    "mono": {
+     "price": 2390,
+     "maker": "K.Pガスケット",
+     "stock": "当日出荷",
+     "unit": "1枚"
+    }
+   },
+   {
+    "pn": "35179-80F00",
+    "name": "Socket Cover Assy,Headlamp",
+    "diagram": "フロントランプ",
+    "uid": "23053232_38",
+    "ref": "7",
+    "sup": [],
+    "mono": null
+   },
+   {
+    "pn": "11110-53A05",
+    "name": "Head, Cylinder",
+    "diagram": "シリンダーヘッド",
+    "uid": "23053200_1",
+    "ref": "1",
+    "sup": [],
+    "mono": null
+   },
+   {
+    "pn": "11117-52E10",
+    "name": "Bolt,CylinderHead",
+    "diagram": "シリンダーヘッド",
+    "uid": "23053200_1",
+    "ref": "6",
+    "sup": [],
+    "mono": null
+   }
+  ],
+  "at": "2026-11-11T10:00:40.474Z"
+ }
+}
