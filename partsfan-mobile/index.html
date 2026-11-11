@@ -149,6 +149,12 @@
   .mitem .nm{display:block;font-size:13px;opacity:.8;margin-top:2px}
   .mitem .st{display:inline-block;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-top:6px}
   .mitem .cat{font-size:12px;opacity:.6;margin-left:6px}
+  .qhit{display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px;text-decoration:none;color:inherit}
+  .qhit .r1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .qhit .pr{font-weight:800;white-space:nowrap}
+  .qhit .st{font-size:12px;font-weight:700}
+  .qhit .src{display:block;font-size:11px;opacity:.55;margin-top:6px}
+  .qmemo .mi{font-size:12px;opacity:.75;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -174,6 +180,7 @@
         <button class="btn" type="button" id="quickPaste">貼り付け</button>
       </div>
       <div class="qprev" id="quickPreview"></div>
+      <div id="quickMonoHit"></div>
       <button class="qbtn primary" type="button" id="quickGo">③ 保存して最安検索（Gemini）</button>
       <button class="qbtn" type="button" id="quickMono">この品番をモノタロウで検索</button>
     </div>
@@ -755,6 +762,12 @@
         copyText(buildPrompt(m),'検索文をコピーしました。Geminiに貼ってください');
         setTimeout(function(){window.open('https://gemini.google.com/app','_blank','noopener');},350);
       });
+      var mi=null;
+      var hits=monoHits(m.pn);
+      if(hits.length){
+        var mi=document.createElement('span'); mi.className='mi';
+        mi.textContent=(hits[0][5]!=null?('¥'+hits[0][5].toLocaleString()):'価格なし')+' '+hits[0][4];
+      }
       var mono=document.createElement('button'); mono.type='button'; mono.textContent='モノタロウ';
       mono.addEventListener('click',function(){window.open(monoUrl(m.pn),'_blank','noopener');});
       var del=document.createElement('button'); del.type='button'; del.textContent='削除';
@@ -762,22 +775,60 @@
         saveMemos(loadMemos().filter(function(x){return x.id!==m.id;}));
         renderMemos(); renderQuick(); toast('削除しました');
       });
-      row.appendChild(pn); row.appendChild(go); row.appendChild(mono); row.appendChild(del);
+      row.appendChild(pn); if(typeof mi!=='undefined'&&mi) row.appendChild(mi); row.appendChild(go); row.appendChild(mono); row.appendChild(del);
       box.appendChild(row);
+    });
+  }
+  function monoHits(pn){
+    var f=formatSuzukiPn(String(pn||'').trim());
+    if(!f) return [];
+    var compact=f.replace(/[\s-]/g,'');
+    return MONO_ITEMS.filter(function(d){
+      if(d[0]===f) return true;
+      var q=String(d[7]||'').split(/[\s（(]/)[0];
+      return q && q.replace(/[\s-]/g,'')===compact;
+    });
+  }
+  function quickMonoUpdate(){
+    var box=$('quickMonoHit'); if(!box) return;
+    box.innerHTML='';
+    var v=$('quickPn').value.trim();
+    if(!v) return;
+    var f=formatSuzukiPn(v);
+    if(f.replace(/[\s-]/g,'').length<8) return;
+    var hits=monoHits(f);
+    if(!hits.length){
+      var none=document.createElement('div'); none.className='qhit';
+      none.innerHTML='';
+      var t=document.createElement('span'); t.className='st'; t.textContent='モノタロウ対象91件に無し';
+      var src=document.createElement('span'); src.className='src'; src.textContent=MONO_ASOF+'取得データで判定（対象カテゴリ外の可能性あり）';
+      none.appendChild(t); none.appendChild(src); box.appendChild(none);
+      return;
+    }
+    hits.forEach(function(d){
+      var a=document.createElement('a'); a.className='qhit'; a.href=monoUrl(d[0]); a.target='_blank'; a.rel='noopener';
+      var r1=document.createElement('div'); r1.className='r1';
+      var nm=document.createElement('span'); nm.textContent=d[2]+' '+d[3];
+      var pr=document.createElement('span'); pr.className='pr'; pr.textContent=(d[5]!=null)?('¥'+d[5].toLocaleString()+'（税別）'):'価格なし';
+      r1.appendChild(nm); r1.appendChild(pr);
+      var st=document.createElement('span'); st.className='st'; st.textContent='モノタロウ: '+d[4]+' / '+d[8];
+      var src=document.createElement('span'); src.className='src'; src.textContent=MONO_ASOF+'取得データ ・ タップでモノタロウを開く';
+      a.appendChild(r1); a.appendChild(st); a.appendChild(src); box.appendChild(a);
     });
   }
   function quickPreviewUpdate(){
     var v=$('quickPn').value.trim();
     var pv=$('quickPreview');
-    if(!v){pv.textContent=''; return;}
+    if(!v){pv.textContent=''; quickMonoUpdate(); return;}
     var f=formatSuzukiPn(v);
     pv.textContent=(f!==v)?('→ '+f):('→ '+f+'（正式表記）');
+    quickMonoUpdate();
   }
   $('quickPn').addEventListener('input',quickPreviewUpdate);
   $('quickPaste').addEventListener('click',function(){
     if(navigator.clipboard&&navigator.clipboard.readText){
       navigator.clipboard.readText().then(function(t){
-        if(t){$('quickPn').value=t.trim(); quickPreviewUpdate();}
+        if(t){$('quickPn').value=t.trim(); quickPreviewUpdate(); if(typeof loadMonoData==='function') loadMonoData(false);}
         else{toast('コピーされている文字がありません');}
       },function(){$('quickPn').focus(); toast('入力欄を長押しして「ペースト」してください');});
     }else{$('quickPn').focus(); toast('入力欄を長押しして「ペースト」してください');}
@@ -830,6 +881,7 @@
       if(d && d.items && d.items.length){
         MONO_ITEMS=d.items; MONO_ASOF=d.asof||MONO_ASOF;
         if($('monoBox').style.display!=='none') renderMono();
+        if(typeof quickMonoUpdate==='function') quickMonoUpdate();
         if(manual) toast('データを読み込みました（'+MONO_ASOF+'取得）');
       } else if(manual){ toast('新しいデータがまだありません'); }
     }).catch(function(){ if(manual) toast('データを取得できませんでした'); });
