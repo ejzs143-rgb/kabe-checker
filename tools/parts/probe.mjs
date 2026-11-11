@@ -62,18 +62,49 @@ let fail = 0;
 for (const [uid, en] of DIAGRAMS) {
   try {
     const root = await fetchDiagram(uid);
-    const parts = (root && root.parts) || [];
+    const partsArr = (root && root.parts) || [];
+    const positions = (root && root.positions) || [];
+    if (!out.debug.rootKeys) out.debug.rootKeys = root ? Object.keys(root) : [];
+    if (!out.debug.samplePositions && positions.length) out.debug.samplePositions = positions.slice(0, 3);
+    if (!out.debug.positionKeys && positions.length) out.debug.positionKeys = Object.keys(positions[0] || {});
+    const byId = {};
+    for (const p of partsArr) { if (p && p.id != null) byId[p.id] = p; }
+    if (!out.debug.sampleParts && partsArr.length) { out.debug.sampleParts = partsArr.slice(0, 2); out.debug.partKeys = Object.keys(partsArr[0] || {}); }
     const rows = [];
-    for (const p of parts) {
-      if (!p || typeof p !== 'object') continue;
-      const rawUid = p.uid || p.partNumber || p.number || '';
-      const rawPn = String(rawUid).replace(/^suzuki-/i, '');
-      const name = p.name || p.title || '';
-      const ref = p.refNumber != null ? String(p.refNumber) : (p.ref != null ? String(p.ref) : '');
-      const qty = p.quantity != null ? p.quantity : (p.qty != null ? p.qty : (p.perAssembly != null ? p.perAssembly : null));
-      rows.push([formatPn(rawPn), rawPn, name, ref, qty]);
-      if (!out.debug.sampleParts && rows.length >= 3) out.debug.sampleParts = parts.slice(0, 3);
-      if (!out.debug.partKeys && p) out.debug.partKeys = Object.keys(p);
+    const seen = new Set();
+    function pushRow(part, ref, qty) {
+      if (!part) return;
+      const rawPn = String(part.number || String(part.uid || '').replace(/^suzuki-/i, ''));
+      if (!rawPn) return;
+      const key = rawPn + '|' + ref;
+      if (seen.has(key)) return;
+      seen.add(key);
+      const sup = [];
+      for (const ss of (part.supersessions || [])) {
+        for (const item of (ss.supersessionSet || [])) {
+          const sp = byId[item.partId];
+          if (sp && sp.number) sup.push(formatPn(String(sp.number)));
+        }
+      }
+      rows.push([formatPn(rawPn), rawPn, part.name || '', ref != null ? String(ref) : '', qty != null ? qty : null, sup]);
+    }
+    if (positions.length) {
+      for (const pos of positions) {
+        if (!pos || typeof pos !== 'object') continue;
+        const ref = pos.refNumber != null ? pos.refNumber : (pos.ref != null ? pos.ref : (pos.number != null ? pos.number : ''));
+        const qty = pos.quantity != null ? pos.quantity : (pos.qty != null ? pos.qty : null);
+        const ids = [];
+        if (pos.partId != null) ids.push(pos.partId);
+        if (pos.part && pos.part.id != null) ids.push(pos.part.id);
+        if (Array.isArray(pos.partIds)) ids.push(...pos.partIds);
+        if (Array.isArray(pos.parts)) for (const x of pos.parts) ids.push(typeof x === 'object' ? x.id : x);
+        if (Array.isArray(pos.partOptions)) for (const x of pos.partOptions) ids.push(typeof x === 'object' ? (x.partId != null ? x.partId : x.id) : x);
+        if (!ids.length && pos.id != null && byId[pos.id]) ids.push(pos.id);
+        for (const id of ids) pushRow(byId[id], ref, qty);
+      }
+    }
+    if (!rows.length) {
+      for (const p of partsArr) pushRow(p, '', null);
     }
     out.diagrams[uid] = { en, parts: rows };
   } catch (e) {
