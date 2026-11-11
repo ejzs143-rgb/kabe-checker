@@ -170,11 +170,10 @@
       <input type="text" id="diagramFilter" placeholder="絞り込み（例: ブレーキ、ランプ、ドア）" autocomplete="off" />
       <div id="diagramList"></div>
     </div>
-    <a class="qbtn" style="margin-top:10px" href="https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1" target="_blank" rel="noopener">MegaZipの全一覧（英語）を開く</a>
     <div class="qsub">
+      <a href="https://www.megazip.net/parts/cars/suzuki/diagrams/cappuccino/ea11r-japan-dohc-turbo--5mt-std-t1-1" target="_blank" rel="noopener">MegaZip全一覧（英語）</a>
       <a href="https://www.amayama.com/en/catalogs/suzuki/cappuccino/1-open-right-1991-2080" target="_blank" rel="noopener">Amayamaで照合</a>
       <a href="https://partsfan.com/suzuki/" target="_blank" rel="noopener">PartsFanで照合</a>
-      <a href="https://www.monotaro.com/monotaroMain.py?func=monotaro.carParts.searchServlet.SearchServlet&mode=searchCarParts&selectCarName=++%BD%BD%DE%B7+%B6%CC%DF%C1%B0%C9+660+DOHC+%C0%B0%CE%DE+E-EA11R+EA11RCAXF+5FMT++199111+199505+F6AT+660+DOHC&selectCategoryName=%83G%83A%83R%83%93%83t%83B%83%8B%83%5E%81%5B+%83x%83%8B%83g+%83K%83X%83P%83b%83g%81E%83p%83b%83L%83%93%81E%83I%83C%83%8B%83V%81%5B%83%8B+%83u%83%8C%81%5B%83L%83%8A%83y%83A+%83I%83C%83%8B%83V%81%5B%83%8B%81E%83x%83A%83%8A%83%93%83O+%83h%83%89%83C%83u%83V%83%83%83t%83g%83u%81%5B%83c+%83S%83%80%83p%81%5B%83c+%83%8A%83r%83%8B%83g%82%B7%82%D7%82%C4+%83I%83%8B%83%BF%83l%81%5B%83%BF%81%5B+%83X%83%BF%81%5B%83%BF%81%5B+%83p%83%8F%83X%83e%83%7C%83%93%83v&search_mode_for_car_select=designate_search&hdnDesignateNo=06963&hdnClassifyNo=0003&hdnTypeNo=&carNo=49489&itemgroup_1=11&itemgroup_1=12&itemgroup_1=16&itemgroup_3=20&itemgroup_3=23&itemgroup_3=21&itemgroup_3=22&monoItem=7" target="_blank" rel="noopener">モノタロウ EA11R一覧（91件）</a>
     </div>
     <div class="qcard">
       <label for="quickPn">② 品番（図面で見つけた番号）</label>
@@ -185,7 +184,6 @@
       <div class="qprev" id="quickPreview"></div>
       <div id="quickMonoHit"></div>
       <button class="qbtn primary" type="button" id="quickGo">③ 保存して最安検索（Gemini）</button>
-      <button class="qbtn" type="button" id="quickMono">この品番をモノタロウで検索</button>
     </div>
     <div id="quickList"></div>
     <button class="qbtn" type="button" id="monoToggle" style="margin-top:14px">モノタロウ 在庫・価格（91件）</button>
@@ -769,21 +767,19 @@
       var hits=monoHits(m.pn);
       if(hits.length){
         var showM=monoBest(hits);
-        var mi=document.createElement('span'); mi.className='mi';
+        var mi=document.createElement('a'); mi.className='mi'; mi.href=monoUrl(m.pn); mi.target='_blank'; mi.rel='noopener'; mi.title='タップでモノタロウを開く';
         if(showM){
           mi.textContent='最安¥'+showM[5].toLocaleString()+'（'+showM[2]+' '+showM[7]+'・'+(showM[2]==='スズキ'?'純正':'互換品')+'） '+showM[4];
         }else{
           mi.textContent='モノタロウ: 在庫なし';
         }
       }
-      var mono=document.createElement('button'); mono.type='button'; mono.textContent='モノタロウ';
-      mono.addEventListener('click',function(){window.open(monoUrl(m.pn),'_blank','noopener');});
       var del=document.createElement('button'); del.type='button'; del.textContent='削除';
       del.addEventListener('click',function(){
         saveMemos(loadMemos().filter(function(x){return x.id!==m.id;}));
         renderMemos(); renderQuick(); toast('削除しました');
       });
-      row.appendChild(pn); if(typeof mi!=='undefined'&&mi) row.appendChild(mi); row.appendChild(go); row.appendChild(mono); row.appendChild(del);
+      row.appendChild(pn); if(typeof mi!=='undefined'&&mi) row.appendChild(mi); row.appendChild(go); row.appendChild(del);
       box.appendChild(row);
     });
   }
@@ -793,6 +789,7 @@
     var compact=f.replace(/[\s-]/g,'');
     return MONO_ITEMS.filter(function(d){
       if(d[0]===f) return true;
+      if(String(d[0]).replace(/[\s-]/g,'')===compact) return true;
       var q=String(d[7]||'').split(/[\s（(]/)[0];
       return q && q.replace(/[\s-]/g,'')===compact;
     });
@@ -816,9 +813,8 @@
     if(f.replace(/[\s-]/g,'').length<8) return;
     var hits=monoHits(f);
     if(!hits.length){
-      var none=document.createElement('div'); none.className='qhit';
-      none.innerHTML='';
-      var t=document.createElement('span'); t.className='st'; t.textContent='モノタロウ対象91件に無し';
+      var none=document.createElement('a'); none.className='qhit'; none.href=monoUrl(f); none.target='_blank'; none.rel='noopener';
+      var t=document.createElement('span'); t.className='st'; t.textContent='モノタロウ対象91件に無し（タップでモノタロウ検索）';
       var src=document.createElement('span'); src.className='src'; src.textContent=MONO_ASOF+'取得データで判定（対象カテゴリ外の可能性あり）';
       none.appendChild(t); none.appendChild(src); box.appendChild(none);
       return;
@@ -868,11 +864,6 @@
     }else{$('quickPn').focus(); toast('入力欄を長押しして「ペースト」してください');}
   });
   function monoUrl(pn){return 'https://www.monotaro.com/s/?q='+encodeURIComponent(String(pn||'').replace(/[\s-]/g,''));}
-  $('quickMono').addEventListener('click',function(){
-    var pn=formatSuzukiPn($('quickPn').value.trim());
-    if(!pn){toast('品番を入れてください'); $('quickPn').focus(); return;}
-    window.open(monoUrl(pn),'_blank','noopener');
-  });
   $('quickGo').addEventListener('click',function(){
     var pn=formatSuzukiPn($('quickPn').value.trim());
     if(!pn){toast('品番を入れてください'); $('quickPn').focus(); return;}
