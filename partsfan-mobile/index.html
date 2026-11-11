@@ -155,7 +155,7 @@
   .qhit .st{font-size:12px;font-weight:700}
   .qhit .src{display:block;font-size:11px;opacity:.55;margin-top:6px}
   .qmemo .mi{font-size:12px;opacity:.75;white-space:nowrap}
-.dtej{display:inline-block;margin:2px 0 8px;font-size:13px;color:#8a4b00;background:#fff3dd;border:1px solid #e8c98a;border-radius:6px;padding:3px 9px;text-decoration:none}
+.dtej{display:inline-block;margin:2px 0 8px;font-size:13.5px;font-weight:700;color:#ffffff;background:#7a4400;border:1px solid #5f3400;border-radius:6px;padding:5px 10px;text-decoration:none}
 .pkr{border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-top:6px;background:#fff}
 .pkr .pp{font-weight:700;font-size:15px}
 .pkr .pm{font-size:12px;color:var(--sub);margin-top:1px}
@@ -205,8 +205,7 @@
     </div>
     <button class="qbtn" type="button" id="qaToggle" style="margin-top:14px">AIに部品を聞く（フリーワード）</button>
     <div id="qaBoxWrap" style="display:none;margin-top:10px">
-      <input type="text" id="qaInput" placeholder="例: ヘッドカバーのガスケット、ターボのオイル漏れ" autocomplete="off" />
-      <div id="qaLocal"></div>
+      <input type="text" id="qaInput" placeholder="キーワードや質問を入れる（例: ヘッドカバーのガスケット）" autocomplete="off" />
       <div id="qaKeyBox" style="margin-top:8px">
         <div class="small">AIを使うにはGemini APIキー（無料）が必要です。キーはこの端末の中だけに保存され、公開ページには載りません。</div>
         <div style="display:flex;gap:6px;margin-top:6px">
@@ -215,9 +214,11 @@
         </div>
       </div>
       <div id="qaKeyState" class="small" style="margin-top:6px;display:none">APIキー設定済み <a href="#" id="qaKeyEdit">変更する</a></div>
-      <button class="qbtn" type="button" id="qaAsk" style="margin-top:8px">AIに聞く</button>
+      <button class="qbtn primary" type="button" id="qaAsk" style="margin-top:10px">AIに聞く</button>
       <div class="small" style="margin-top:6px">キーが無い場合はGitHub経由（回答まで約1〜2分）で送ります。</div>
-      <button class="qbtn" type="button" id="qaReload" style="margin-top:6px">回答を再読み込み</button>
+      <div id="qaLocalHead" class="small" style="margin-top:10px;display:none">候補（入力した瞬間に出ます。タップで品番を②にセット）</div>
+      <div id="qaLocal"></div>
+      <button class="qbtn" type="button" id="qaReload" style="margin-top:10px">回答を再読み込み</button>
       <div id="qaBox"></div>
     </div>
     <details style="margin-top:20px">
@@ -914,8 +915,11 @@
   }
   function renderQaLocal(){
     var q=($('qaInput').value||'').trim(); var box=$('qaLocal'); box.innerHTML='';
-    if(q.length<2) return;
-    localSearch(q).forEach(function(p){ box.appendChild(partCard(p,'')); });
+    var head=$('qaLocalHead');
+    if(q.length<2){ if(head) head.style.display='none'; return; }
+    var hits=localSearch(q);
+    if(head) head.style.display=hits.length?'block':'none';
+    hits.forEach(function(p){ box.appendChild(partCard(p,'')); });
   }
   function renderQa(){
     var box=$('qaBox'); if(!box) return; box.innerHTML='';
