@@ -1,6 +1,70 @@
 {
  "entries": [
   {
+   "n": 11,
+   "q": "ブレーキパッド",
+   "a": "AI接続エラー。候補から機械的に表示します。",
+   "ai": false,
+   "dbg": "EXC Unexpected token 'O', \"OK\r\n\" is not valid JSON",
+   "picks": [
+    {
+     "pn": "55810-80F00",
+     "name": "Pad Set,RearDiscBrake",
+     "diagram": "リアホイールブレーキ",
+     "uid": "23053251_57",
+     "ref": "3",
+     "sup": [
+      "55810-50E11",
+      "55810-50E12",
+      "55810-50E10"
+     ],
+     "mono": null
+    },
+    {
+     "pn": "55810-50E10",
+     "name": "Pad Set,RearDiscBrake",
+     "diagram": "リアホイールブレーキ",
+     "uid": "23053251_57",
+     "ref": "3",
+     "sup": [
+      "55810-50E11",
+      "55810-50E12"
+     ],
+     "mono": null
+    },
+    {
+     "pn": "55200-62840",
+     "name": "Pad Set,DiscBrake",
+     "diagram": "フロントホイールブレーキ",
+     "uid": "23053253_59",
+     "ref": "8",
+     "sup": [
+      "55200-51811"
+     ],
+     "mono": null
+    },
+    {
+     "pn": "51100-80F00",
+     "name": "Cylinder Assy,BrakeMaster",
+     "diagram": "ブレーキマスターシリンダー",
+     "uid": "23053249_55",
+     "ref": "1",
+     "sup": [],
+     "mono": null
+    },
+    {
+     "pn": "51810-50E00",
+     "name": "Piston Set,BrakeMaster",
+     "diagram": "ブレーキマスターシリンダー",
+     "uid": "23053249_55",
+     "ref": "2",
+     "sup": [],
+     "mono": null
+    }
+   ],
+   "at": "2026-11-11T10:18:41.601Z"
+  },
+  {
    "n": 10,
    "q": "ターボからオイル漏れ。関連するシール類がほしい",
    "a": "AI接続エラー。候補から機械的に表示します。",
@@ -127,64 +191,67 @@
   }
  ],
  "latest": {
-  "n": 10,
-  "q": "ターボからオイル漏れ。関連するシール類がほしい",
+  "n": 11,
+  "q": "ブレーキパッド",
   "a": "AI接続エラー。候補から機械的に表示します。",
   "ai": false,
   "dbg": "EXC Unexpected token 'O', \"OK\r\n\" is not valid JSON",
   "picks": [
    {
-    "pn": "13900-80F00",
-    "name": "Charger Assy,Turbo",
-    "diagram": "ターボチャージャー",
-    "uid": "23053210_13",
+    "pn": "55810-80F00",
+    "name": "Pad Set,RearDiscBrake",
+    "diagram": "リアホイールブレーキ",
+    "uid": "23053251_57",
+    "ref": "3",
+    "sup": [
+     "55810-50E11",
+     "55810-50E12",
+     "55810-50E10"
+    ],
+    "mono": null
+   },
+   {
+    "pn": "55810-50E10",
+    "name": "Pad Set,RearDiscBrake",
+    "diagram": "リアホイールブレーキ",
+    "uid": "23053251_57",
+    "ref": "3",
+    "sup": [
+     "55810-50E11",
+     "55810-50E12"
+    ],
+    "mono": null
+   },
+   {
+    "pn": "55200-62840",
+    "name": "Pad Set,DiscBrake",
+    "diagram": "フロントホイールブレーキ",
+    "uid": "23053253_59",
+    "ref": "8",
+    "sup": [
+     "55200-51811"
+    ],
+    "mono": null
+   },
+   {
+    "pn": "51100-80F00",
+    "name": "Cylinder Assy,BrakeMaster",
+    "diagram": "ブレーキマスターシリンダー",
+    "uid": "23053249_55",
     "ref": "1",
     "sup": [],
     "mono": null
    },
    {
-    "pn": "13930-73B50",
-    "name": "Pipe,TurboOil,Intake",
-    "diagram": "ターボチャージャー",
-    "uid": "23053210_13",
+    "pn": "51810-50E00",
+    "name": "Piston Set,BrakeMaster",
+    "diagram": "ブレーキマスターシリンダー",
+    "uid": "23053249_55",
     "ref": "2",
-    "sup": [
-     "13930-73B5V"
-    ],
-    "mono": null
-   },
-   {
-    "pn": "13948-85560",
-    "name": "Bolt,Union 8X20",
-    "diagram": "ターボチャージャー",
-    "uid": "23053210_13",
-    "ref": "3",
     "sup": [],
-    "mono": null
-   },
-   {
-    "pn": "09168-08016",
-    "name": "Gasket(8.2X14X1)",
-    "diagram": "ターボチャージャー",
-    "uid": "23053210_13",
-    "ref": "4",
-    "sup": [
-     "09168-B0801-6N000"
-    ],
-    "mono": null
-   },
-   {
-    "pn": "09360-10031",
-    "name": "Bolt,Union",
-    "diagram": "ターボチャージャー",
-    "uid": "23053210_13",
-    "ref": "5",
-    "sup": [
-     "09360-10031-XC0"
-    ],
     "mono": null
    }
   ],
-  "at": "2026-11-11T10:04:17.908Z"
+  "at": "2026-11-11T10:18:41.601Z"
  }
 }
