@@ -828,12 +828,14 @@
     var kind=(d[2]==='スズキ')?'純正':'互換品';
     return '¥'+d[5].toLocaleString()+'（税別） '+d[2]+' '+d[7]+'（'+kind+'） '+d[4]+' / '+d[8];
   }
-  var PARTSDB=null, MANUAL=null, QA=null;
+  var PARTSDB=null, MANUAL=null, QA=null, MPAGES=null;
   function manualUrl(mi){ if(!mi||!MANUAL||!MANUAL.files) return '#'; var f=MANUAL.files[mi.f]; if(!f) return '#'; return f.url+'#page='+mi.p; }
+  function manualUrlFor(uid,mi){ if(uid&&MPAGES&&MPAGES[uid]) return MPAGES[uid]; return manualUrl(mi); }
   function loadPartsDb(){
     fetch('../tools/parts/probe.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ PARTSDB=j; quickMonoUpdate(); }).catch(function(){});
     fetch('manual-index.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ MANUAL=j; }).catch(function(){});
     fetch('qa-data.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ QA=j; renderQa(); }).catch(function(){});
+    fetch('manual-pages.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ if(j&&j.pages){ MPAGES=j.pages; renderDiagrams(); quickMonoUpdate(); renderQa(); } }).catch(function(){});
   }
   function partsByPn(pn){
     if(!PARTSDB||!PARTSDB.diagrams) return [];
@@ -860,7 +862,7 @@
     div.appendChild(pp); div.appendChild(pm);
     if(monoLine){ var mm=document.createElement('div'); mm.className='pm'; mm.textContent=monoLine; div.appendChild(mm); }
     var mi=(MANUAL&&MANUAL.diagrams)?MANUAL.diagrams[p.uid]:null;
-    if(mi){ var tj=document.createElement('a'); tj.className='dtej'; tj.href=manualUrl(mi); tj.target='_blank'; tj.rel='noopener'; tj.textContent='整備手順 p.'+mi.p; div.appendChild(tj); }
+    if(mi){ var tj=document.createElement('a'); tj.className='dtej'; tj.href=manualUrlFor(p.uid,mi); tj.target='_blank'; tj.rel='noopener'; tj.textContent='整備手順 p.'+mi.p; div.appendChild(tj); }
     div.addEventListener('click',function(ev){ if(ev.target.tagName==='A') return; $('quickPn').value=p.pn; quickPreviewUpdate(); window.scrollTo(0,0); toast('品番を②にセット: '+p.pn); });
     return div;
   }
@@ -1093,7 +1095,7 @@
       var en=document.createElement('span'); en.className='en'; en.textContent=d[1];
       a.appendChild(jp); a.appendChild(en); box.appendChild(a);
       var mi=(typeof MANUAL!=='undefined'&&MANUAL&&MANUAL.diagrams)?MANUAL.diagrams[d[2]]:null;
-      if(mi){ var tj=document.createElement('a'); tj.className='dtej'; tj.href=manualUrl(mi); tj.target='_blank'; tj.rel='noopener'; tj.textContent='整備手順: 整備編 p.'+mi.p+'（'+mi.t+'）'; box.appendChild(tj); }
+      if(mi){ var tj=document.createElement('a'); tj.className='dtej'; tj.href=manualUrlFor(d[2],mi); tj.target='_blank'; tj.rel='noopener'; tj.textContent='整備手順: 整備編 p.'+mi.p+'（'+mi.t+'）'; box.appendChild(tj); }
     });
   }
   $('diagramFilter').addEventListener('input',renderDiagrams);
