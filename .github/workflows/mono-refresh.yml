@@ -1,0 +1,49 @@
+name: mono-refresh
+
+on:
+  workflow_dispatch:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  refresh:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.title == 'mono-refresh' && github.event.issue.user.login == github.repository_owner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: tools/mono
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Fetch Monotaro data
+        run: node tools/mono/fetch.mjs
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add partsfan-mobile/mono-data.json
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "モノタロウ在庫・価格データを更新"
+            git push
+          fi
+      - name: Report back to the issue
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE" --body "モノタロウの最新データを取得し、アプリ用データを更新しました。アプリに戻って「再読み込み」を押してください。"
+          gh issue close "$ISSUE"
