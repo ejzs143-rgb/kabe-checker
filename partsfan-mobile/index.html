@@ -155,6 +155,9 @@
   .qhit .st{font-size:12px;font-weight:700}
   .qhit .src{display:block;font-size:11px;opacity:.55;margin-top:6px}
   .qmemo .mi{font-size:12px;opacity:.75;white-space:nowrap}
+  .best{border:2px solid #e8590c !important}
+  .bestb{display:inline-block;background:#e8590c;color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:2px}
+  .qbest{font-size:16px;font-weight:800;margin-top:10px}
 </style>
 </head>
 <body>
@@ -765,8 +768,10 @@
       var mi=null;
       var hits=monoHits(m.pn);
       if(hits.length){
+        var pricedM=hits.filter(function(d){return d[5]!=null;});
+        var showM=pricedM.length?pricedM.reduce(function(a,b){return b[5]<a[5]?b:a;}):hits[0];
         var mi=document.createElement('span'); mi.className='mi';
-        mi.textContent=(hits[0][5]!=null?('¥'+hits[0][5].toLocaleString()):'価格なし')+' '+hits[0][4];
+        mi.textContent=(showM[5]!=null?('最安¥'+showM[5].toLocaleString()):'価格なし')+' '+showM[4];
       }
       var mono=document.createElement('button'); mono.type='button'; mono.textContent='モノタロウ';
       mono.addEventListener('click',function(){window.open(monoUrl(m.pn),'_blank','noopener');});
@@ -805,10 +810,27 @@
       none.appendChild(t); none.appendChild(src); box.appendChild(none);
       return;
     }
-    hits.forEach(function(d){
-      var a=document.createElement('a'); a.className='qhit'; a.href=monoUrl(d[0]); a.target='_blank'; a.rel='noopener';
+    var priced=hits.filter(function(d){return d[5]!=null;});
+    var best=priced.length?priced.reduce(function(a,b){return b[5]<a[5]?b:a;}):null;
+    if(best){
+      var bh=document.createElement('div'); bh.className='qbest';
+      bh.textContent='モノタロウ最安: ¥'+best[5].toLocaleString()+'（税別） '+best[2]+' '+best[3];
+      box.appendChild(bh);
+      var units={}; hits.forEach(function(d){units[d[8]]=1;});
+      if(Object.keys(units).length>1){
+        var un=document.createElement('div'); un.className='small';
+        un.textContent='注意: 販売単位が異なる商品が混ざっているため、単純な価格比較にならない場合があります';
+        box.appendChild(un);
+      }
+    }
+    var sorted=hits.slice().sort(function(a,b){
+      var pa=a[5]==null?Infinity:a[5], pb=b[5]==null?Infinity:b[5]; return pa-pb;
+    });
+    sorted.forEach(function(d){
+      var a=document.createElement('a'); a.className='qhit'+(best&&d===best?' best':''); a.href=monoUrl(d[0]); a.target='_blank'; a.rel='noopener';
       var r1=document.createElement('div'); r1.className='r1';
       var nm=document.createElement('span'); nm.textContent=d[2]+' '+d[3];
+      if(best&&d===best){var bb=document.createElement('span'); bb.className='bestb'; bb.textContent='最安'; nm.appendChild(bb);}
       var pr=document.createElement('span'); pr.className='pr'; pr.textContent=(d[5]!=null)?('¥'+d[5].toLocaleString()+'（税別）'):'価格なし';
       r1.appendChild(nm); r1.appendChild(pr);
       var st=document.createElement('span'); st.className='st'; st.textContent='モノタロウ: '+d[4]+' / '+d[8];
@@ -856,17 +878,26 @@
   function renderMono(){
     var q=($('monoFilter').value||'').toLowerCase();
     var box=$('monoList'); box.innerHTML='';
+    var minByPn={};
+    MONO_ITEMS.forEach(function(d){
+      if(d[5]==null) return;
+      if(minByPn[d[0]]==null||d[5]<minByPn[d[0]]) minByPn[d[0]]=d[5];
+    });
+    var cntByPn={};
+    MONO_ITEMS.forEach(function(d){ if(d[5]!=null) cntByPn[d[0]]=(cntByPn[d[0]]||0)+1; });
     $('monoStamp').textContent='取得日: '+MONO_ASOF+'（価格は税別。タップでモノタロウの現在表示を開く）';
     MONO_ITEMS.forEach(function(d){
       var hay=(d[0]+' '+d[1]+' '+d[2]+' '+d[3]+' '+d[7]).toLowerCase();
       if(q && hay.indexOf(q)<0) return;
+      var isBest=d[5]!=null&&cntByPn[d[0]]>1&&d[5]===minByPn[d[0]];
       var a=document.createElement('a');
-      a.className='mitem'; a.href=monoUrl(d[0]); a.target='_blank'; a.rel='noopener';
+      a.className='mitem'+(isBest?' best':''); a.href=monoUrl(d[0]); a.target='_blank'; a.rel='noopener';
       var r1=document.createElement('div'); r1.className='r1';
       var pn=document.createElement('span'); pn.className='pn2'; pn.textContent=d[0];
       var pr=document.createElement('span'); pr.className='pr'; pr.textContent=(d[5]!=null)?('¥'+d[5].toLocaleString()):'価格なし';
       r1.appendChild(pn); r1.appendChild(pr);
       var nm=document.createElement('span'); nm.className='nm'; nm.textContent=d[2]+' '+d[3]+'（優良品番 '+d[7]+'）';
+      if(isBest){var bb2=document.createElement('span'); bb2.className='bestb'; bb2.textContent='この品番の最安'; nm.appendChild(bb2);}
       var st=document.createElement('span'); st.className='st'; st.textContent=d[4];
       var cat=document.createElement('span'); cat.className='cat'; cat.textContent=d[1];
       a.appendChild(r1); a.appendChild(nm); a.appendChild(st); a.appendChild(cat);
