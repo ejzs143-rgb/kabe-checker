@@ -42,5 +42,5 @@ try {
   out.detailText = txt;
 } catch (e) { out.note += ' click: ' + e.message; }
 await browser.close();
-fs.writeFileSync('tools/parts/probe.json', JSON.stringify(out, null, 1));
+fs.writeFileSync('probe.json', JSON.stringify(out, null, 1));
 console.log(JSON.stringify({ requests: out.requests.length, items: out.dialogItems.length, note: out.note }));
