@@ -1,0 +1,48 @@
+name: parts-tools
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'probe | harvest | chat'
+        required: true
+        default: 'probe'
+permissions:
+  contents: write
+  issues: write
+  models: read
+jobs:
+  probe:
+    if: >-
+      (github.event_name == 'issues' && github.event.issue.title == 'parts-probe' && github.event.issue.user.login == github.repository_owner) ||
+      (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install
+        working-directory: tools/parts
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+      - name: Probe
+        working-directory: tools/parts
+        run: node probe.mjs
+      - name: Commit probe result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/parts/probe.json
+          git commit -m "MegaZip構造プローブ結果" || echo "no change"
+          git push
+      - name: Comment and close issue
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: 'プローブ完了。tools/parts/probe.json を確認してください。' });
+            await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, state: 'closed' });
