@@ -917,7 +917,7 @@
         if(!r.ok){ return r.text().then(function(t){ var err=new Error('HTTP '+r.status+' '+String(t).slice(0,120)); err.status=r.status; throw err; }); }
         return r.json();
       }).catch(function(e){
-        if(e && (e.status===404||e.status===503) && i<models.length-1) return callModel(i+1);
+        if(e && (e.status===404||e.status===503||e.status===429) && i<models.length-1) return callModel(i+1);
         throw e;
       });
     }
@@ -936,10 +936,15 @@
       var b2=$('qaBox'); if(b2) b2.scrollIntoView({block:'nearest'});
     }).catch(function(e){
       qaBusy=false; if(askBtn){ askBtn.disabled=false; askBtn.textContent='AIに聞く'; }
-      toast('AI呼び出しに失敗: '+e.message);
-      var fb=localCandidates(q,5).map(function(c){ return {pn:c.pn,name:c.name,diagram:c.diagram,uid:c.uid,ref:c.ref,mono:null}; });
-      QA={latest:{q:q,a:'AI呼び出しに失敗しました（'+e.message+'）。キーが正しいか確認してください。下は機械検索の候補です。',ai:false,picks:fb}};
+      var msg;
+      if(e && e.status===429){ msg='AIの無料枠の上限に達しました。しばらく時間をおくか、明日また試してください。下は機械検索の候補です。'; }
+      else if(e && (e.status===400||e.status===403)){ msg='APIキー側でエラーになりました（HTTP '+e.status+'）。「変更する」からキーを貼り直してください。下は機械検索の候補です。'; }
+      else { msg='AI呼び出しに失敗しました（'+String(e&&e.message||e).slice(0,60)+'）。下は機械検索の候補です。'; }
+      toast(msg);
+      var fb=localCandidates(q,5).map(function(c){ var bh=monoBest(monoHits(c.pn)); return {pn:c.pn,name:c.name,diagram:c.diagram,uid:c.uid,ref:c.ref,mono:bh?{price:bh[5],maker:bh[2],stock:bh[4]}:null}; });
+      QA={latest:{q:q,a:msg,ai:false,picks:fb}};
       renderQa();
+      var b3=$('qaBox'); if(b3) b3.scrollIntoView({block:'nearest'});
     });
     return true;
   }
