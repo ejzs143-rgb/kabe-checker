@@ -847,18 +847,28 @@
     Object.keys(PARTSDB.diagrams).forEach(function(uid){ var d=PARTSDB.diagrams[uid]; (d.parts||[]).forEach(function(r){ if(String(r[1]).toUpperCase()===key||String(r[0]).replace(/-/g,'').toUpperCase()===key){ out.push({pn:r[0],raw:r[1],name:r[2],ref:r[3],qty:r[4],sup:r[5]||[],diagram:d.en,uid:uid}); } }); });
     return out;
   }
-  var SYN={'オイルシール':['seal'],'ガスケット':['gasket'],'ベルト':['belt'],'ポンプ':['pump'],'フィルタ':['filter','element'],'フィルター':['filter','element'],'ベアリング':['bearing'],'ブーツ':['boot'],'ホース':['hose'],'ラジエータ':['radiator'],'ラジエーター':['radiator'],'ターボ':['turbocharger'],'クラッチ':['clutch'],'ブレーキ':['brake'],'パッド':['pad'],'ショック':['shock','strut'],'スプリング':['spring'],'アーム':['arm'],'ブッシュ':['bush'],'マウント':['mount'],'センサ':['sensor'],'センサー':['sensor'],'リレー':['relay'],'スイッチ':['switch'],'モータ':['motor'],'モーター':['motor'],'ファン':['fan'],'タンク':['tank'],'マフラ':['muffler'],'マフラー':['muffler'],'パイプ':['pipe'],'ケーブル':['cable'],'ランプ':['lamp'],'ミラー':['mirror'],'ガラス':['glass'],'ドア':['door'],'シート':['seat'],'ヘッド':['head'],'カバー':['cover'],'バルブ':['valve'],'ピストン':['piston'],'シャフト':['shaft'],'ギア':['gear'],'ミッション':['transmission'],'デフ':['differential'],'ワイパー':['wiper'],'オルタ':['generator'],'ジェネレータ':['generator'],'スタータ':['starting'],'エアコン':['conditioner','compressor'],'コンプレッサ':['compressor'],'ヒータ':['heater'],'ヒーター':['heater'],'サーモ':['thermostat'],'プラグ':['plug'],'インジェクタ':['injector'],'スロットル':['throttle'],'エアクリ':['air cleaner'],'燃料':['fuel'],'フューエル':['fuel'],'マニホールド':['manifold'],'エキゾースト':['exhaust']};
-  function localSearch(q){
+  var SYN={'オイルシール':['seal'],'ガスケット':['gasket'],'ベルト':['belt'],'ポンプ':['pump'],'フィルタ':['filter','element'],'フィルター':['filter','element'],'ベアリング':['bearing'],'ブーツ':['boot'],'ホース':['hose'],'ラジエータ':['radiator'],'ラジエーター':['radiator'],'ターボ':['turbocharger'],'クラッチ':['clutch'],'ブレーキ':['brake'],'パッド':['pad'],'ショック':['shock','strut'],'スプリング':['spring'],'アーム':['arm'],'ブッシュ':['bush'],'マウント':['mount'],'センサ':['sensor'],'センサー':['sensor'],'リレー':['relay'],'スイッチ':['switch'],'モータ':['motor'],'モーター':['motor'],'ファン':['fan'],'タンク':['tank'],'マフラ':['muffler'],'マフラー':['muffler'],'パイプ':['pipe'],'ケーブル':['cable'],'ランプ':['lamp'],'ミラー':['mirror'],'ガラス':['glass'],'ドア':['door'],'シート':['seat'],'ヘッド':['head'],'カバー':['cover'],'バルブ':['valve'],'ピストン':['piston'],'シャフト':['shaft'],'ギア':['gear'],'ミッション':['transmission'],'デフ':['differential'],'ワイパー':['wiper'],'オルタ':['generator'],'ジェネレータ':['generator'],'スタータ':['starting'],'エアコン':['conditioner','compressor'],'コンプレッサ':['compressor'],'ヒータ':['heater'],'ヒーター':['heater'],'サーモ':['thermostat'],'プラグ':['plug'],'インジェクタ':['injector'],'スロットル':['throttle'],'エアクリ':['air cleaner'],'燃料':['fuel'],'フューエル':['fuel'],'マニホールド':['manifold'],'エキゾースト':['exhaust'],'ハブ':['hub'],'ホイール':['wheel'],'フロント':['front'],'リア':['rear','back'],'アクスル':['axle'],'ナックル':['knuckle'],'ドラム':['drum'],'ロータ':['rotor','disc'],'ローター':['rotor','disc'],'キャリパ':['caliper'],'キャリパー':['caliper'],'タイロッド':['tie rod'],'スタビ':['stabilizer'],'スタビライザ':['stabilizer'],'ダンパ':['damper','absorber'],'ダンパー':['damper','absorber'],'クランク':['crank'],'コンロッド':['conrod','connecting'],'ピストンリング':['ring'],'カム':['cam'],'ロッカ':['rocker'],'タペット':['tappet'],'チェーン':['chain'],'テンショナ':['tensioner'],'テンショナー':['tensioner'],'プーリ':['pulley'],'プーリー':['pulley'],'イグニッション':['ignition'],'コイル':['coil'],'オルタネータ':['generator'],'オルタネーター':['generator'],'セルモータ':['starting'],'ラジエタ':['radiator'],'コンデンサ':['condenser'],'コンデンサー':['condenser'],'レジスタ':['resistor'],'レジスター':['resistor'],'アイドル':['idle','isc'],'ISC':['idle','isc'],'フライホイール':['flywheel'],'プロペラ':['propeller'],'ドライブシャフト':['drive shaft','driveshaft'],'インテーク':['intake'],'触媒':['catalyst','converter'],'サイレンサ':['muffler','silencer'],'サイレンサー':['muffler','silencer']};
+  function scoreParts(q,withRaw,limit){
     if(!PARTSDB||!PARTSDB.diagrams||!q) return [];
-    var terms=[]; var ql=q.toLowerCase();
-    ql.split(/[\s、。・,.\/]+/).forEach(function(w){ if(w) terms.push(w); });
-    Object.keys(SYN).forEach(function(jp){ if(q.indexOf(jp)>=0){ SYN[jp].forEach(function(e){ terms.push(e); }); } });
+    var terms=[], jpTerms=[];
+    q.toLowerCase().split(/[\s、。・,.\/]+/).forEach(function(w){ if(w){ terms.push(w); if(/[\u3000-\u30ff\u4e00-\u9faf]/.test(w)) jpTerms.push(w); } });
+    Object.keys(SYN).forEach(function(jp){ if(q.indexOf(jp)>=0){ SYN[jp].forEach(function(e){ terms.push(e); }); if(jpTerms.indexOf(jp)<0) jpTerms.push(jp); } });
     if(!terms.length) return [];
     var scored=[];
-    Object.keys(PARTSDB.diagrams).forEach(function(uid){ var d=PARTSDB.diagrams[uid]; (d.parts||[]).forEach(function(r){ var sc=0; var nm=(r[2]||'').toLowerCase(); var dg=(d.en||''); terms.forEach(function(t){ if(nm.indexOf(t)>=0) sc+=10; if(dg.indexOf(t)>=0) sc+=3; if(String(r[0]).replace(/-/g,'').toLowerCase()===t.replace(/-/g,'')) sc+=100; }); if(sc>0) scored.push([sc,{pn:r[0],name:r[2],diagram:d.en,uid:uid,ref:r[3]}]); }); });
+    Object.keys(PARTSDB.diagrams).forEach(function(uid){ var d=PARTSDB.diagrams[uid]; var dg=(d.en||'');
+      var dBoost=0; jpTerms.forEach(function(jt){ if(jt.length>=2 && dg.indexOf(jt)>=0) dBoost+=8; });
+      (d.parts||[]).forEach(function(r){ var sc=dBoost; var nm=(r[2]||'').toLowerCase(); var hits=0;
+        terms.forEach(function(t){ if(nm.indexOf(t)>=0){ sc+=10; hits++; } if(String(r[0]).replace(/-/g,'').toLowerCase()===t.replace(/-/g,'')) sc+=100; });
+        if(hits>=2) sc+=15;
+        if(sc>0) scored.push([sc, withRaw?{pn:r[0],raw:r[1],name:r[2],ref:r[3],qty:r[4],sup:r[5]||[],diagram:d.en,uid:uid}:{pn:r[0],name:r[2],diagram:d.en,uid:uid,ref:r[3]}]);
+      });
+    });
     scored.sort(function(a,b){ return b[0]-a[0]; });
-    return scored.slice(0,8).map(function(x){ return x[1]; });
+    var seen={}, out=[];
+    scored.forEach(function(x){ var k=x[1].pn+'|'+x[1].uid+'|'+x[1].ref; if(seen[k]) return; seen[k]=1; out.push(x[1]); });
+    return out.slice(0,limit);
   }
+  function localSearch(q){ return scoreParts(q,false,8); }
   function partCard(p,monoLine){
     var div=document.createElement('div'); div.className='pkr';
     var pp=document.createElement('div'); pp.className='pp'; pp.textContent=p.pn;
@@ -870,19 +880,7 @@
     div.addEventListener('click',function(ev){ if(ev.target.tagName==='A') return; $('quickPn').value=p.pn; quickPreviewUpdate(); window.scrollTo(0,0); toast('品番を②にセット: '+p.pn); });
     return div;
   }
-  function localCandidates(q,limit){
-    if(!PARTSDB||!PARTSDB.diagrams||!q) return [];
-    var terms=[]; var ql=q.toLowerCase();
-    ql.split(/[\s、。・,.\/]+/).forEach(function(w){ if(w) terms.push(w); });
-    Object.keys(SYN).forEach(function(jp){ if(q.indexOf(jp)>=0){ SYN[jp].forEach(function(e){ terms.push(e); }); } });
-    if(!terms.length) return [];
-    var scored=[];
-    Object.keys(PARTSDB.diagrams).forEach(function(uid){ var d=PARTSDB.diagrams[uid]; (d.parts||[]).forEach(function(r){ var sc=0; var nm=(r[2]||'').toLowerCase(); terms.forEach(function(t){ if(nm.indexOf(t)>=0) sc+=10; if((d.en||'').indexOf(t)>=0) sc+=3; if(String(r[0]).replace(/-/g,'').toLowerCase()===t.replace(/-/g,'')) sc+=100; }); if(sc>0) scored.push([sc,{pn:r[0],raw:r[1],name:r[2],ref:r[3],qty:r[4],sup:r[5]||[],diagram:d.en,uid:uid}]); }); });
-    scored.sort(function(a,b){ return b[0]-a[0]; });
-    var seen={}, out=[];
-    scored.forEach(function(x){ var k=x[1].pn+'|'+x[1].uid+'|'+x[1].ref; if(seen[k]) return; seen[k]=1; out.push(x[1]); });
-    return out.slice(0,limit||40);
-  }
+  function localCandidates(q,limit){ return scoreParts(q,true,limit||40); }
   function geminiKey(){ try{ return localStorage.getItem('pfh_gemini_key_v1')||''; }catch(e){ return ''; } }
   function refreshKeyUi(){
     var has=!!geminiKey();
