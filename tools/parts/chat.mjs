@@ -62,11 +62,20 @@ for (const w of question.toLowerCase().split(/[\s、。・,.\/「」『』()（�
 for (const [jp, ens] of Object.entries(SYN)) if (question.includes(jp)) for (const e of ens) terms.add(e);
 for (const w of Object.keys(SYN)) if (question.includes(w)) terms.add(w);
 const scored = allParts.map(p => [scorePart(p, [...terms]), p]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]);
-const candidates = scored.slice(0, 40).map(x => x[1]);
+const seenCand = new Set();
+const candidates = [];
+for (const [, p] of scored) {
+  const k = p.pn + '|' + p.uid + '|' + p.ref;
+  if (seenCand.has(k)) continue;
+  seenCand.add(k);
+  candidates.push(p);
+  if (candidates.length >= 40) break;
+}
 
 let answer = '';
 let picks = [];
 let aiUsed = false;
+let dbg = '';
 if (token && candidates.length) {
   try {
     const candText = candidates.map(p => `${p.pn} | ${p.name} | 図面:${p.diagram} | 図番:${p.ref}`).join('\n');
@@ -94,10 +103,13 @@ if (token && candidates.length) {
         aiUsed = true;
       }
     } else {
+      const body = await res.text().catch(() => '');
       answer = 'AI応答エラー（HTTP ' + res.status + '）。候補から機械的に表示します。';
+      dbg = 'HTTP ' + res.status + ' ' + body.slice(0, 200);
     }
   } catch (e) {
     answer = 'AI接続エラー。候補から機械的に表示します。';
+    dbg = 'EXC ' + (e && e.message ? e.message : String(e));
   }
 }
 if (!aiUsed) {
@@ -111,7 +123,7 @@ const pickDetails = picks.map(pn => {
 });
 const qaPath = 'partsfan-mobile/qa-data.json';
 const qa = loadJson(qaPath, { entries: [] });
-qa.entries.unshift({ n: Number(issueNumber) || null, q: question, a: answer, ai: aiUsed, picks: pickDetails, at: new Date().toISOString() });
+qa.entries.unshift({ n: Number(issueNumber) || null, q: question, a: answer, ai: aiUsed, dbg, picks: pickDetails, at: new Date().toISOString() });
 qa.entries = qa.entries.slice(0, 20);
 qa.latest = qa.entries[0];
 fs.writeFileSync(qaPath, JSON.stringify(qa, null, 1));
