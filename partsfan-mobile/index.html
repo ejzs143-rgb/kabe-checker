@@ -181,6 +181,11 @@
     <button class="qbtn" type="button" id="monoToggle" style="margin-top:14px">モノタロウ 在庫・価格（91件）</button>
     <div id="monoBox" style="display:none;margin-top:10px">
       <div class="small" id="monoStamp"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" type="button" id="monoRefreshReq" style="flex:1">最新を取得</button>
+        <button class="btn" type="button" id="monoReload" style="flex:1">再読み込み</button>
+      </div>
+      <div class="small" style="margin-top:6px">「最新を取得」はGitHubの依頼ページが開くので、そのまま送信を押す。1〜3分後に戻って「再読み込み」を押すと新しいデータになる。</div>
       <input type="text" id="monoFilter" placeholder="絞り込み（例: ブレーキ、シール、品番）" autocomplete="off" style="margin-top:8px" />
       <div id="monoList"></div>
     </div>
@@ -817,6 +822,23 @@
       box.appendChild(a);
     });
   }
+  function loadMonoData(manual){
+    fetch('mono-data.json?ts='+Date.now(),{cache:'no-store'}).then(function(r){
+      if(!r.ok) throw new Error('http');
+      return r.json();
+    }).then(function(d){
+      if(d && d.items && d.items.length){
+        MONO_ITEMS=d.items; MONO_ASOF=d.asof||MONO_ASOF;
+        if($('monoBox').style.display!=='none') renderMono();
+        if(manual) toast('データを読み込みました（'+MONO_ASOF+'取得）');
+      } else if(manual){ toast('新しいデータがまだありません'); }
+    }).catch(function(){ if(manual) toast('データを取得できませんでした'); });
+  }
+  $('monoRefreshReq').addEventListener('click',function(){
+    window.open('https://github.com/ejzs143-rgb/kabe-checker/issues/new?title=mono-refresh&body='+encodeURIComponent('モノタロウ在庫・価格の最新取得を依頼します。そのまま送信してください。'),'_blank','noopener');
+  });
+  $('monoReload').addEventListener('click',function(){ loadMonoData(true); });
+  loadMonoData(false);
   $('monoFilter').addEventListener('input',renderMono);
   $('monoToggle').addEventListener('click',function(){
     var b=$('monoBox'); var open=b.style.display!=='none';
