@@ -129,9 +129,11 @@
   .qrow2{display:flex;gap:10px}
   .qrow2 input{flex:1;min-width:0}
   .qprev{font-size:17px;font-weight:800;margin-top:10px;min-height:24px}
-  .qmemo{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);
+  .qmemo{display:block;background:var(--surface);border:1px solid var(--line);
     border-radius:12px;padding:10px 12px;margin-top:10px}
-  .qmemo .pn{flex:1;font-size:18px;font-weight:800;word-break:break-all;cursor:pointer}
+  .qmemo .qrow1{display:flex;align-items:center;gap:8px}
+  .qmemo .pn{flex:1;min-width:0;font-size:18px;font-weight:800;word-break:break-all;cursor:pointer}
+  .qmemo button{flex-shrink:0}
   .qmemo button{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
     font-weight:700;font-family:inherit;cursor:pointer;padding:0 12px;color:inherit}
   .qmemo button.go{background:#1f6feb;border-color:#1f6feb;color:#fff}
@@ -154,7 +156,7 @@
   .qhit .pr{font-weight:800;white-space:nowrap}
   .qhit .st{font-size:12px;font-weight:700}
   .qhit .src{display:block;font-size:11px;opacity:.55;margin-top:6px}
-  .qmemo .mi{font-size:12px;opacity:.75;white-space:nowrap}
+  .qmemo .mi{display:block;font-size:13px;opacity:.85;margin-top:6px;white-space:normal}
 .dtej{display:inline-block;margin:2px 0 8px;font-size:13.5px;font-weight:700;color:#ffffff;background:#7a4400;border:1px solid #5f3400;border-radius:6px;padding:5px 10px;text-decoration:none}
 .pkr{border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-top:6px;background:var(--surface);color:var(--ink)}
 .pkr .pp{font-weight:700;font-size:15px;color:var(--ink)}
@@ -803,7 +805,9 @@
         saveMemos(loadMemos().filter(function(x){return x.id!==m.id;}));
         renderMemos(); renderQuick(); toast('削除しました');
       });
-      row.appendChild(pn); if(typeof mi!=='undefined'&&mi) row.appendChild(mi); row.appendChild(go); row.appendChild(del);
+      var row1=document.createElement('div'); row1.className='qrow1';
+      row1.appendChild(pn); row1.appendChild(go); row1.appendChild(del);
+      row.appendChild(row1); if(mi) row.appendChild(mi);
       box.appendChild(row);
     });
   }
