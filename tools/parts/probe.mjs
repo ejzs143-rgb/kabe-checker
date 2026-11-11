@@ -44,11 +44,17 @@ function formatPn(raw) {
 }
 async function fetchDiagram(uid) {
   const url = 'https://www.megazip.net/_app/remote/v0cwks/getDiagram?payload=' + payloadFor(uid);
-  const res = await fetch(url, { headers: { 'User-Agent': UA, 'Referer': 'https://www.megazip.net/' } });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const j = await res.json();
-  const values = JSON.parse(j.data);
-  return hydrate(values);
+  let lastErr = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(url, { headers: { 'User-Agent': UA, 'Referer': 'https://www.megazip.net/' } });
+    if (res.status === 429) { lastErr = new Error('HTTP 429'); await new Promise(r => setTimeout(r, 20000 * (attempt + 1))); continue; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    const values = JSON.parse(j.data);
+    const r0 = hydrate(values);
+    return (r0 && typeof r0 === 'object' && r0._ && typeof r0._ === 'object') ? r0._ : r0;
+  }
+  throw lastErr || new Error('fetch failed');
 }
 
 const out = { asof: new Date().toISOString().slice(0, 10), source: 'MegaZip getDiagram (EA11R)', diagrams: {}, debug: {} };
@@ -74,7 +80,7 @@ for (const [uid, en] of DIAGRAMS) {
     fail++;
     out.diagrams[uid] = { en, parts: [], error: String(e && e.message || e) };
   }
-  await new Promise(r => setTimeout(r, 250));
+  await new Promise(r => setTimeout(r, 1200));
 }
 out.debug.failures = fail;
 out.debug.totalDiagrams = Object.keys(out.diagrams).length;
