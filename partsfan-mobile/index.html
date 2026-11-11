@@ -903,21 +903,28 @@
     if(!cands.length){ qaShowPending(q,'候補が見つかりませんでした。言葉を変えて試してください。'); return true; }
     qaBusy=true;
     var askBtn=$('qaAsk'); if(askBtn){ askBtn.disabled=true; askBtn.textContent='生成中…'; }
-    qaShowPending(q,'AIが回答を生成中です…（数秒〜30秒ほどかかります。そのままお待ちください）');
+    qaShowPending(q,'AIが回答を生成中です…（通常は数秒、最長でも約1分で打ち切ります）');
     var candText=cands.map(function(c){ return c.pn+' | '+c.name+' | 図面:'+c.diagram+' | 図番:'+c.ref; }).join('\n');
     var prompt='あなたはスズキ カプチーノ EA11R の部品案内アシスタントです。ユーザーの質問に対し、与えられた候補リストの中からだけ該当部品を最大5件選び、JSONのみで答えてください。形式: {"answer":"日本語の簡潔な説明","picks":["品番1","品番2"]}。候補に無い品番は絶対に出力しないこと。該当が無ければ picks は空にし、その旨を answer に書くこと。\n\n質問: '+q+'\n\n候補リスト:\n'+candText;
     toast('AIに聞いています…');
     var models=['gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite','gemini-flash-latest'];
     function callModel(i){
+      var ctrl=('AbortController' in window)?new AbortController():null;
+      var timer=ctrl?setTimeout(function(){ ctrl.abort(); },15000):null;
       return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+models[i]+':generateContent',{
         method:'POST',
         headers:{'Content-Type':'application/json','x-goog-api-key':key},
+        signal:ctrl?ctrl.signal:undefined,
         body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})
       }).then(function(r){
+        if(timer) clearTimeout(timer);
         if(!r.ok){ return r.text().then(function(t){ var err=new Error('HTTP '+r.status+' '+String(t).slice(0,120)); err.status=r.status; throw err; }); }
         return r.json();
       }).catch(function(e){
-        if(e && (e.status===404||e.status===503||e.status===429) && i<models.length-1) return callModel(i+1);
+        if(timer) clearTimeout(timer);
+        var timeout=(e && (e.name==='AbortError'));
+        if((timeout || (e && (e.status===404||e.status===503||e.status===429))) && i<models.length-1) return callModel(i+1);
+        if(timeout){ var te=new Error('応答が15秒以内に返りませんでした'); te.status=0; throw te; }
         throw e;
       });
     }
