@@ -155,6 +155,12 @@
   .qhit .st{font-size:12px;font-weight:700}
   .qhit .src{display:block;font-size:11px;opacity:.55;margin-top:6px}
   .qmemo .mi{font-size:12px;opacity:.75;white-space:nowrap}
+.dtej{display:inline-block;margin:2px 0 8px;font-size:13px;color:#8a4b00;background:#fff3dd;border:1px solid #e8c98a;border-radius:6px;padding:3px 9px;text-decoration:none}
+.pkr{border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-top:6px;background:#fff}
+.pkr .pp{font-weight:700;font-size:15px}
+.pkr .pm{font-size:12px;color:var(--sub);margin-top:1px}
+#qaBox .qa-a{font-size:14px;margin-top:6px;white-space:pre-wrap}
+#qaBox .qa-q{font-size:12px;color:var(--sub);margin-top:8px}
   .best{border:2px solid #e8590c !important}
   .bestb{display:inline-block;background:#e8590c;color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:2px}
   .qbest{font-size:16px;font-weight:800;margin-top:10px}
@@ -196,6 +202,15 @@
       <div class="small" style="margin-top:6px">「最新を取得」はGitHubの依頼ページが開くので、そのまま送信を押す。1〜3分後に戻って「再読み込み」を押すと新しいデータになる。</div>
       <input type="text" id="monoFilter" placeholder="絞り込み（例: ブレーキ、シール、品番）" autocomplete="off" style="margin-top:8px" />
       <div id="monoList"></div>
+    </div>
+    <button class="qbtn" type="button" id="qaToggle" style="margin-top:14px">AIに部品を聞く（フリーワード）</button>
+    <div id="qaBoxWrap" style="display:none;margin-top:10px">
+      <input type="text" id="qaInput" placeholder="例: ヘッドカバーのガスケット、ターボのオイル漏れ" autocomplete="off" />
+      <div id="qaLocal"></div>
+      <button class="qbtn" type="button" id="qaAsk" style="margin-top:8px">AIに聞く（回答は約1分後）</button>
+      <div class="small" style="margin-top:6px">質問をGitHubへ送ります。送信後、1〜2分してから「回答を再読み込み」を押すと回答が表示されます。</div>
+      <button class="qbtn" type="button" id="qaReload" style="margin-top:6px">回答を再読み込み</button>
+      <div id="qaBox"></div>
     </div>
     <details style="margin-top:20px">
       <summary>その他の機能・説明（通常は開かない）</summary>
@@ -804,6 +819,61 @@
     var kind=(d[2]==='スズキ')?'純正':'互換品';
     return '¥'+d[5].toLocaleString()+'（税別） '+d[2]+' '+d[7]+'（'+kind+'） '+d[4]+' / '+d[8];
   }
+  var PARTSDB=null, MANUAL=null, QA=null;
+  function manualUrl(mi){ if(!mi||!MANUAL||!MANUAL.files) return '#'; var f=MANUAL.files[mi.f]; if(!f) return '#'; return f.url+'#page='+mi.p; }
+  function loadPartsDb(){
+    fetch('../tools/parts/probe.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ PARTSDB=j; quickMonoUpdate(); }).catch(function(){});
+    fetch('manual-index.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ MANUAL=j; }).catch(function(){});
+    fetch('qa-data.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){ QA=j; renderQa(); }).catch(function(){});
+  }
+  function partsByPn(pn){
+    if(!PARTSDB||!PARTSDB.diagrams) return [];
+    var key=String(pn||'').replace(/-/g,'').toUpperCase(); var out=[];
+    Object.keys(PARTSDB.diagrams).forEach(function(uid){ var d=PARTSDB.diagrams[uid]; (d.parts||[]).forEach(function(r){ if(String(r[1]).toUpperCase()===key||String(r[0]).replace(/-/g,'').toUpperCase()===key){ out.push({pn:r[0],raw:r[1],name:r[2],ref:r[3],qty:r[4],sup:r[5]||[],diagram:d.en,uid:uid}); } }); });
+    return out;
+  }
+  var SYN={'オイルシール':['seal'],'ガスケット':['gasket'],'ベルト':['belt'],'ポンプ':['pump'],'フィルタ':['filter','element'],'フィルター':['filter','element'],'ベアリング':['bearing'],'ブーツ':['boot'],'ホース':['hose'],'ラジエータ':['radiator'],'ラジエーター':['radiator'],'ターボ':['turbocharger'],'クラッチ':['clutch'],'ブレーキ':['brake'],'パッド':['pad'],'ショック':['shock','strut'],'スプリング':['spring'],'アーム':['arm'],'ブッシュ':['bush'],'マウント':['mount'],'センサ':['sensor'],'センサー':['sensor'],'リレー':['relay'],'スイッチ':['switch'],'モータ':['motor'],'モーター':['motor'],'ファン':['fan'],'タンク':['tank'],'マフラ':['muffler'],'マフラー':['muffler'],'パイプ':['pipe'],'ケーブル':['cable'],'ランプ':['lamp'],'ミラー':['mirror'],'ガラス':['glass'],'ドア':['door'],'シート':['seat'],'ヘッド':['head'],'カバー':['cover'],'バルブ':['valve'],'ピストン':['piston'],'シャフト':['shaft'],'ギア':['gear'],'ミッション':['transmission'],'デフ':['differential'],'ワイパー':['wiper'],'オルタ':['generator'],'ジェネレータ':['generator'],'スタータ':['starting'],'エアコン':['conditioner','compressor'],'コンプレッサ':['compressor'],'ヒータ':['heater'],'ヒーター':['heater'],'サーモ':['thermostat'],'プラグ':['plug'],'インジェクタ':['injector'],'スロットル':['throttle'],'エアクリ':['air cleaner'],'燃料':['fuel'],'フューエル':['fuel'],'マニホールド':['manifold'],'エキゾースト':['exhaust']};
+  function localSearch(q){
+    if(!PARTSDB||!PARTSDB.diagrams||!q) return [];
+    var terms=[]; var ql=q.toLowerCase();
+    ql.split(/[\s、。・,.\/]+/).forEach(function(w){ if(w) terms.push(w); });
+    Object.keys(SYN).forEach(function(jp){ if(q.indexOf(jp)>=0){ SYN[jp].forEach(function(e){ terms.push(e); }); } });
+    if(!terms.length) return [];
+    var scored=[];
+    Object.keys(PARTSDB.diagrams).forEach(function(uid){ var d=PARTSDB.diagrams[uid]; (d.parts||[]).forEach(function(r){ var sc=0; var nm=(r[2]||'').toLowerCase(); var dg=(d.en||''); terms.forEach(function(t){ if(nm.indexOf(t)>=0) sc+=10; if(dg.indexOf(t)>=0) sc+=3; if(String(r[0]).replace(/-/g,'').toLowerCase()===t.replace(/-/g,'')) sc+=100; }); if(sc>0) scored.push([sc,{pn:r[0],name:r[2],diagram:d.en,uid:uid,ref:r[3]}]); }); });
+    scored.sort(function(a,b){ return b[0]-a[0]; });
+    return scored.slice(0,8).map(function(x){ return x[1]; });
+  }
+  function partCard(p,monoLine){
+    var div=document.createElement('div'); div.className='pkr';
+    var pp=document.createElement('div'); pp.className='pp'; pp.textContent=p.pn;
+    var pm=document.createElement('div'); pm.className='pm'; pm.textContent=(p.name||'')+(p.diagram?' / '+p.diagram:'')+(p.ref?' / 図番'+p.ref:'');
+    div.appendChild(pp); div.appendChild(pm);
+    if(monoLine){ var mm=document.createElement('div'); mm.className='pm'; mm.textContent=monoLine; div.appendChild(mm); }
+    var mi=(MANUAL&&MANUAL.diagrams)?MANUAL.diagrams[p.uid]:null;
+    if(mi){ var tj=document.createElement('a'); tj.className='dtej'; tj.href=manualUrl(mi); tj.target='_blank'; tj.rel='noopener'; tj.textContent='整備手順 p.'+mi.p; div.appendChild(tj); }
+    div.addEventListener('click',function(ev){ if(ev.target.tagName==='A') return; $('quickPn').value=p.pn; quickPreviewUpdate(); window.scrollTo(0,0); toast('品番を②にセット: '+p.pn); });
+    return div;
+  }
+  function renderQaLocal(){
+    var q=($('qaInput').value||'').trim(); var box=$('qaLocal'); box.innerHTML='';
+    if(q.length<2) return;
+    localSearch(q).forEach(function(p){ box.appendChild(partCard(p,'')); });
+  }
+  function renderQa(){
+    var box=$('qaBox'); if(!box) return; box.innerHTML='';
+    if(!QA||!QA.latest) return;
+    var e=QA.latest;
+    var q=document.createElement('div'); q.className='qa-q'; q.textContent='Q: '+e.q+(e.ai?'':'（機械検索の結果）');
+    var a=document.createElement('div'); a.className='qa-a'; a.textContent=e.a||'';
+    box.appendChild(q); box.appendChild(a);
+    (e.picks||[]).forEach(function(pk){
+      var monoLine='';
+      if(pk.mono) monoLine='モノタロウ最安 ¥'+pk.mono.price.toLocaleString()+'（税別） '+pk.mono.maker+' / '+pk.mono.stock;
+      else monoLine='モノタロウ: 対象91件に無し';
+      box.appendChild(partCard({pn:pk.pn,name:pk.name,diagram:pk.diagram,uid:pk.uid,ref:pk.ref},monoLine));
+    });
+  }
   function quickMonoUpdate(){
     var box=$('quickMonoHit'); if(!box) return;
     box.innerHTML='';
@@ -812,6 +882,8 @@
     var f=formatSuzukiPn(v);
     if(f.replace(/[\s-]/g,'').length<8) return;
     var hits=monoHits(f);
+    var pdb=partsByPn(f);
+    pdb.slice(0,3).forEach(function(pp){ box.appendChild(partCard(pp,'純正部品カタログ: '+(pp.name||''))); });
     if(!hits.length){
       var none=document.createElement('a'); none.className='qhit'; none.href=monoUrl(f); none.target='_blank'; none.rel='noopener';
       var t=document.createElement('span'); t.className='st'; t.textContent='モノタロウ対象91件に無し（タップでモノタロウ検索）';
@@ -948,6 +1020,8 @@
       var jp=document.createElement('span'); jp.className='jp'; jp.textContent=d[0];
       var en=document.createElement('span'); en.className='en'; en.textContent=d[1];
       a.appendChild(jp); a.appendChild(en); box.appendChild(a);
+      var mi=(typeof MANUAL!=='undefined'&&MANUAL&&MANUAL.diagrams)?MANUAL.diagrams[d[2]]:null;
+      if(mi){ var tj=document.createElement('a'); tj.className='dtej'; tj.href=manualUrl(mi); tj.target='_blank'; tj.rel='noopener'; tj.textContent='整備手順: 整備編 p.'+mi.p+'（'+mi.t+'）'; box.appendChild(tj); }
     });
   }
   $('diagramFilter').addEventListener('input',renderDiagrams);
@@ -956,6 +1030,16 @@
     b.style.display=open?'none':'block';
     if(!open){renderDiagrams(); $('diagramFilter').focus();}
   });
+  if($('qaToggle')){ $('qaToggle').addEventListener('click',function(){ var b=$('qaBoxWrap'); var open=b.style.display!=='none'; b.style.display=open?'none':'block'; if(!open){ renderQa(); var qi=$('qaInput'); if(qi) qi.focus(); } }); }
+  if($('qaInput')){ $('qaInput').addEventListener('input',renderQaLocal); }
+  if($('qaAsk')){ $('qaAsk').addEventListener('click',function(){
+    var q=($('qaInput').value||'').trim(); if(!q){ toast('質問を入力してください'); return; }
+    var url='https://github.com/ejzs143-rgb/kabe-checker/issues/new?title='+encodeURIComponent('parts-chat')+'&body='+encodeURIComponent(q);
+    window.open(url,'_blank','noopener');
+    toast('GitHubで送信を押してください。回答は約1〜2分後');
+  }); }
+  if($('qaReload')){ $('qaReload').addEventListener('click',function(){ loadPartsDb(); toast('回答を読み込み直しました'); }); }
+  loadPartsDb();
   renderQuick();
   /* 旧タブ画面はアーカイブへ移し、下部タブは廃止 */
   var ab=$('archiveBody');
