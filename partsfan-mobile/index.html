@@ -768,10 +768,13 @@
       var mi=null;
       var hits=monoHits(m.pn);
       if(hits.length){
-        var pricedM=hits.filter(function(d){return d[5]!=null;});
-        var showM=pricedM.length?pricedM.reduce(function(a,b){return b[5]<a[5]?b:a;}):hits[0];
+        var showM=monoBest(hits);
         var mi=document.createElement('span'); mi.className='mi';
-        mi.textContent=(showM[5]!=null?('最安¥'+showM[5].toLocaleString()):'価格なし')+' '+showM[4];
+        if(showM){
+          mi.textContent='最安¥'+showM[5].toLocaleString()+'（'+showM[2]+' '+showM[7]+'・'+(showM[2]==='スズキ'?'純正':'互換品')+'） '+showM[4];
+        }else{
+          mi.textContent='モノタロウ: 在庫なし';
+        }
       }
       var mono=document.createElement('button'); mono.type='button'; mono.textContent='モノタロウ';
       mono.addEventListener('click',function(){window.open(monoUrl(m.pn),'_blank','noopener');});
@@ -794,6 +797,16 @@
       return q && q.replace(/[\s-]/g,'')===compact;
     });
   }
+  function monoInStock(d){ return d[5]!=null && /欠品|取扱終了|取扱停止/.test(d[4])===false; }
+  function monoBest(hits){
+    var priced=(hits||[]).filter(monoInStock);
+    if(!priced.length) return null;
+    return priced.reduce(function(a,b){return b[5]<a[5]?b:a;});
+  }
+  function monoBestLabel(d){
+    var kind=(d[2]==='スズキ')?'純正':'互換品';
+    return '¥'+d[5].toLocaleString()+'（税別） '+d[2]+' '+d[7]+'（'+kind+'） '+d[4]+' / '+d[8];
+  }
   function quickMonoUpdate(){
     var box=$('quickMonoHit'); if(!box) return;
     box.innerHTML='';
@@ -810,11 +823,10 @@
       none.appendChild(t); none.appendChild(src); box.appendChild(none);
       return;
     }
-    var priced=hits.filter(function(d){return d[5]!=null;});
-    var best=priced.length?priced.reduce(function(a,b){return b[5]<a[5]?b:a;}):null;
+    var best=monoBest(hits);
     if(best){
       var bh=document.createElement('div'); bh.className='qbest';
-      bh.textContent='モノタロウ最安: ¥'+best[5].toLocaleString()+'（税別） '+best[2]+' '+best[3];
+      bh.textContent='モノタロウ最安: '+monoBestLabel(best);
       box.appendChild(bh);
       var units={}; hits.forEach(function(d){units[d[8]]=1;});
       if(Object.keys(units).length>1){
@@ -880,16 +892,16 @@
     var box=$('monoList'); box.innerHTML='';
     var minByPn={};
     MONO_ITEMS.forEach(function(d){
-      if(d[5]==null) return;
+      if(!monoInStock(d)) return;
       if(minByPn[d[0]]==null||d[5]<minByPn[d[0]]) minByPn[d[0]]=d[5];
     });
     var cntByPn={};
-    MONO_ITEMS.forEach(function(d){ if(d[5]!=null) cntByPn[d[0]]=(cntByPn[d[0]]||0)+1; });
+    MONO_ITEMS.forEach(function(d){ if(monoInStock(d)) cntByPn[d[0]]=(cntByPn[d[0]]||0)+1; });
     $('monoStamp').textContent='取得日: '+MONO_ASOF+'（価格は税別。タップでモノタロウの現在表示を開く）';
     MONO_ITEMS.forEach(function(d){
       var hay=(d[0]+' '+d[1]+' '+d[2]+' '+d[3]+' '+d[7]).toLowerCase();
       if(q && hay.indexOf(q)<0) return;
-      var isBest=d[5]!=null&&cntByPn[d[0]]>1&&d[5]===minByPn[d[0]];
+      var isBest=monoInStock(d)&&cntByPn[d[0]]>=1&&d[5]===minByPn[d[0]]&&(MONO_ITEMS.filter(function(x){return x[0]===d[0]&&x[5]!=null;}).length>1);
       var a=document.createElement('a');
       a.className='mitem'+(isBest?' best':''); a.href=monoUrl(d[0]); a.target='_blank'; a.rel='noopener';
       var r1=document.createElement('div'); r1.className='r1';
