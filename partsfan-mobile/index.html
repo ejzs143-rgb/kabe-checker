@@ -207,8 +207,16 @@
     <div id="qaBoxWrap" style="display:none;margin-top:10px">
       <input type="text" id="qaInput" placeholder="例: ヘッドカバーのガスケット、ターボのオイル漏れ" autocomplete="off" />
       <div id="qaLocal"></div>
-      <button class="qbtn" type="button" id="qaAsk" style="margin-top:8px">AIに聞く（回答は約1分後）</button>
-      <div class="small" style="margin-top:6px">質問をGitHubへ送ります。送信後、1〜2分してから「回答を再読み込み」を押すと回答が表示されます。</div>
+      <div id="qaKeyBox" style="margin-top:8px">
+        <div class="small">AIを使うにはGemini APIキー（無料）が必要です。キーはこの端末の中だけに保存され、公開ページには載りません。</div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <input type="password" id="qaKey" placeholder="Gemini APIキーを貼り付け" autocomplete="off" style="flex:1" />
+          <button class="btn" type="button" id="qaKeySave">保存</button>
+        </div>
+      </div>
+      <div id="qaKeyState" class="small" style="margin-top:6px;display:none">APIキー設定済み <a href="#" id="qaKeyEdit">変更する</a></div>
+      <button class="qbtn" type="button" id="qaAsk" style="margin-top:8px">AIに聞く</button>
+      <div class="small" style="margin-top:6px">キーが無い場合はGitHub経由（回答まで約1〜2分）で送ります。</div>
       <button class="qbtn" type="button" id="qaReload" style="margin-top:6px">回答を再読み込み</button>
       <div id="qaBox"></div>
     </div>
@@ -855,6 +863,55 @@
     div.addEventListener('click',function(ev){ if(ev.target.tagName==='A') return; $('quickPn').value=p.pn; quickPreviewUpdate(); window.scrollTo(0,0); toast('品番を②にセット: '+p.pn); });
     return div;
   }
+  function localCandidates(q,limit){
+    if(!PARTSDB||!PARTSDB.diagrams||!q) return [];
+    var terms=[]; var ql=q.toLowerCase();
+    ql.split(/[\s、。・,.\/]+/).forEach(function(w){ if(w) terms.push(w); });
+    Object.keys(SYN).forEach(function(jp){ if(q.indexOf(jp)>=0){ SYN[jp].forEach(function(e){ terms.push(e); }); } });
+    if(!terms.length) return [];
+    var scored=[];
+    Object.keys(PARTSDB.diagrams).forEach(function(uid){ var d=PARTSDB.diagrams[uid]; (d.parts||[]).forEach(function(r){ var sc=0; var nm=(r[2]||'').toLowerCase(); terms.forEach(function(t){ if(nm.indexOf(t)>=0) sc+=10; if((d.en||'').indexOf(t)>=0) sc+=3; if(String(r[0]).replace(/-/g,'').toLowerCase()===t.replace(/-/g,'')) sc+=100; }); if(sc>0) scored.push([sc,{pn:r[0],raw:r[1],name:r[2],ref:r[3],qty:r[4],sup:r[5]||[],diagram:d.en,uid:uid}]); }); });
+    scored.sort(function(a,b){ return b[0]-a[0]; });
+    var seen={}, out=[];
+    scored.forEach(function(x){ var k=x[1].pn+'|'+x[1].uid+'|'+x[1].ref; if(seen[k]) return; seen[k]=1; out.push(x[1]); });
+    return out.slice(0,limit||40);
+  }
+  function geminiKey(){ try{ return localStorage.getItem('pfh_gemini_key_v1')||''; }catch(e){ return ''; } }
+  function refreshKeyUi(){
+    var has=!!geminiKey();
+    var kb=$('qaKeyBox'), ks=$('qaKeyState');
+    if(kb) kb.style.display=has?'none':'block';
+    if(ks) ks.style.display=has?'block':'none';
+  }
+  function askGemini(q){
+    var key=geminiKey(); if(!key) return false;
+    var cands=localCandidates(q,40);
+    if(!cands.length){ QA={latest:{q:q,a:'候補が見つかりませんでした。言葉を変えて試してください。',ai:true,picks:[]}}; renderQa(); return true; }
+    var candText=cands.map(function(c){ return c.pn+' | '+c.name+' | 図面:'+c.diagram+' | 図番:'+c.ref; }).join('\n');
+    var prompt='あなたはスズキ カプチーノ EA11R の部品案内アシスタントです。ユーザーの質問に対し、与えられた候補リストの中からだけ該当部品を最大5件選び、JSONのみで答えてください。形式: {"answer":"日本語の簡潔な説明","picks":["品番1","品番2"]}。候補に無い品番は絶対に出力しないこと。該当が無ければ picks は空にし、その旨を answer に書くこと。\n\n質問: '+q+'\n\n候補リスト:\n'+candText;
+    toast('AIに聞いています…');
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-goog-api-key':key},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})
+    }).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(function(j){
+      var txt=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(function(x){return x.text||'';}).join('');
+      var parsed=null; try{ parsed=JSON.parse(txt); }catch(e){ var m=txt.match(/\{[\s\S]*\}/); if(m) parsed=JSON.parse(m[0]); }
+      if(!parsed) throw new Error('応答形式エラー');
+      var valid={}; cands.forEach(function(c){ valid[c.pn]=c; });
+      var picks=(parsed.picks||[]).filter(function(pn){ return valid[pn]; }).slice(0,5).map(function(pn){
+        var c=valid[pn]; var bh=monoBest(monoHits(pn));
+        return {pn:pn,name:c.name,diagram:c.diagram,uid:c.uid,ref:c.ref,mono:bh?{price:bh[5],maker:bh[2],stock:bh[4]}:null};
+      });
+      QA={latest:{q:q,a:String(parsed.answer||''),ai:true,picks:picks}};
+      renderQa(); toast('AI回答が届きました');
+    }).catch(function(e){
+      toast('AI呼び出しに失敗（'+e.message+'）。GitHub経由で送ります');
+      var url='https://github.com/ejzs143-rgb/kabe-checker/issues/new?title='+encodeURIComponent('parts-chat')+'&body='+encodeURIComponent(q);
+      window.open(url,'_blank','noopener');
+    });
+    return true;
+  }
   function renderQaLocal(){
     var q=($('qaInput').value||'').trim(); var box=$('qaLocal'); box.innerHTML='';
     if(q.length<2) return;
@@ -1034,10 +1091,18 @@
   if($('qaInput')){ $('qaInput').addEventListener('input',renderQaLocal); }
   if($('qaAsk')){ $('qaAsk').addEventListener('click',function(){
     var q=($('qaInput').value||'').trim(); if(!q){ toast('質問を入力してください'); return; }
+    if(askGemini(q)) return;
     var url='https://github.com/ejzs143-rgb/kabe-checker/issues/new?title='+encodeURIComponent('parts-chat')+'&body='+encodeURIComponent(q);
     window.open(url,'_blank','noopener');
     toast('GitHubで送信を押してください。回答は約1〜2分後');
   }); }
+  if($('qaKeySave')){ $('qaKeySave').addEventListener('click',function(){
+    var v=($('qaKey').value||'').trim(); if(!v){ toast('キーを貼り付けてください'); return; }
+    try{ localStorage.setItem('pfh_gemini_key_v1',v); }catch(e){}
+    $('qaKey').value=''; refreshKeyUi(); toast('APIキーを保存しました（この端末のみ）');
+  }); }
+  if($('qaKeyEdit')){ $('qaKeyEdit').addEventListener('click',function(ev){ ev.preventDefault(); var kb=$('qaKeyBox'); if(kb) kb.style.display='block'; var ks=$('qaKeyState'); if(ks) ks.style.display='none'; }); }
+  refreshKeyUi();
   if($('qaReload')){ $('qaReload').addEventListener('click',function(){ loadPartsDb(); toast('回答を読み込み直しました'); }); }
   loadPartsDb();
   renderQuick();
