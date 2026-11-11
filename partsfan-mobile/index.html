@@ -890,10 +890,20 @@
     if(kb) kb.style.display=has?'none':'block';
     if(ks) ks.style.display=has?'block':'none';
   }
+  var qaBusy=false;
+  function qaShowPending(q,msg){
+    QA={latest:{q:q,a:msg,ai:true,picks:[]}}; renderQa();
+    var b=$('qaBox'); if(b) b.scrollIntoView({block:'nearest'});
+  }
   function askGemini(q){
     var key=geminiKey(); if(!key) return false;
+    if(qaBusy){ toast('前の質問の回答を生成中です'); return true; }
+    if(!PARTSDB||!PARTSDB.diagrams){ qaShowPending(q,'部品データを読み込み中です。数秒待ってから、もう一度「AIに聞く」を押してください。'); loadPartsDb(); return true; }
     var cands=localCandidates(q,40);
-    if(!cands.length){ QA={latest:{q:q,a:'候補が見つかりませんでした。言葉を変えて試してください。',ai:true,picks:[]}}; renderQa(); return true; }
+    if(!cands.length){ qaShowPending(q,'候補が見つかりませんでした。言葉を変えて試してください。'); return true; }
+    qaBusy=true;
+    var askBtn=$('qaAsk'); if(askBtn){ askBtn.disabled=true; askBtn.textContent='生成中…'; }
+    qaShowPending(q,'AIが回答を生成中です…（数秒〜30秒ほどかかります。そのままお待ちください）');
     var candText=cands.map(function(c){ return c.pn+' | '+c.name+' | 図面:'+c.diagram+' | 図番:'+c.ref; }).join('\n');
     var prompt='あなたはスズキ カプチーノ EA11R の部品案内アシスタントです。ユーザーの質問に対し、与えられた候補リストの中からだけ該当部品を最大5件選び、JSONのみで答えてください。形式: {"answer":"日本語の簡潔な説明","picks":["品番1","品番2"]}。候補に無い品番は絶対に出力しないこと。該当が無ければ picks は空にし、その旨を answer に書くこと。\n\n質問: '+q+'\n\n候補リスト:\n'+candText;
     toast('AIに聞いています…');
@@ -921,8 +931,11 @@
         return {pn:pn,name:c.name,diagram:c.diagram,uid:c.uid,ref:c.ref,mono:bh?{price:bh[5],maker:bh[2],stock:bh[4]}:null};
       });
       QA={latest:{q:q,a:String(parsed.answer||''),ai:true,picks:picks}};
+      qaBusy=false; if(askBtn){ askBtn.disabled=false; askBtn.textContent='AIに聞く'; }
       renderQa(); toast('AI回答が届きました');
+      var b2=$('qaBox'); if(b2) b2.scrollIntoView({block:'nearest'});
     }).catch(function(e){
+      qaBusy=false; if(askBtn){ askBtn.disabled=false; askBtn.textContent='AIに聞く'; }
       toast('AI呼び出しに失敗: '+e.message);
       var fb=localCandidates(q,5).map(function(c){ return {pn:c.pn,name:c.name,diagram:c.diagram,uid:c.uid,ref:c.ref,mono:null}; });
       QA={latest:{q:q,a:'AI呼び出しに失敗しました（'+e.message+'）。キーが正しいか確認してください。下は機械検索の候補です。',ai:false,picks:fb}};
