@@ -1,6 +1,67 @@
 {
  "entries": [
   {
+   "n": 10,
+   "q": "ターボからオイル漏れ。関連するシール類がほしい",
+   "a": "AI接続エラー。候補から機械的に表示します。",
+   "ai": false,
+   "dbg": "EXC Unexpected token 'O', \"OK\r\n\" is not valid JSON",
+   "picks": [
+    {
+     "pn": "13900-80F00",
+     "name": "Charger Assy,Turbo",
+     "diagram": "ターボチャージャー",
+     "uid": "23053210_13",
+     "ref": "1",
+     "sup": [],
+     "mono": null
+    },
+    {
+     "pn": "13930-73B50",
+     "name": "Pipe,TurboOil,Intake",
+     "diagram": "ターボチャージャー",
+     "uid": "23053210_13",
+     "ref": "2",
+     "sup": [
+      "13930-73B5V"
+     ],
+     "mono": null
+    },
+    {
+     "pn": "13948-85560",
+     "name": "Bolt,Union 8X20",
+     "diagram": "ターボチャージャー",
+     "uid": "23053210_13",
+     "ref": "3",
+     "sup": [],
+     "mono": null
+    },
+    {
+     "pn": "09168-08016",
+     "name": "Gasket(8.2X14X1)",
+     "diagram": "ターボチャージャー",
+     "uid": "23053210_13",
+     "ref": "4",
+     "sup": [
+      "09168-B0801-6N000"
+     ],
+     "mono": null
+    },
+    {
+     "pn": "09360-10031",
+     "name": "Bolt,Union",
+     "diagram": "ターボチャージャー",
+     "uid": "23053210_13",
+     "ref": "5",
+     "sup": [
+      "09360-10031-XC0"
+     ],
+     "mono": null
+    }
+   ],
+   "at": "2026-11-11T10:04:17.908Z"
+  },
+  {
    "n": 9,
    "q": "ヘッドカバーのガスケットがほしい。オイル漏れしてる",
    "a": "AI接続エラー。候補から機械的に表示します。",
@@ -66,67 +127,64 @@
   }
  ],
  "latest": {
-  "n": 9,
-  "q": "ヘッドカバーのガスケットがほしい。オイル漏れしてる",
+  "n": 10,
+  "q": "ターボからオイル漏れ。関連するシール類がほしい",
   "a": "AI接続エラー。候補から機械的に表示します。",
   "ai": false,
+  "dbg": "EXC Unexpected token 'O', \"OK\r\n\" is not valid JSON",
   "picks": [
    {
-    "pn": "11141-81401",
-    "name": "Gasket,CylinderHead",
-    "diagram": "シリンダーヘッド",
-    "uid": "23053200_1",
-    "ref": "8",
-    "sup": [],
-    "mono": {
-     "price": 2390,
-     "maker": "K.Pガスケット",
-     "stock": "当日出荷",
-     "unit": "1枚"
-    }
-   },
-   {
-    "pn": "11141-81401",
-    "name": "Gasket,CylinderHead",
-    "diagram": "シリンダーヘッド",
-    "uid": "23053200_1",
-    "ref": "8",
-    "sup": [],
-    "mono": {
-     "price": 2390,
-     "maker": "K.Pガスケット",
-     "stock": "当日出荷",
-     "unit": "1枚"
-    }
-   },
-   {
-    "pn": "35179-80F00",
-    "name": "Socket Cover Assy,Headlamp",
-    "diagram": "フロントランプ",
-    "uid": "23053232_38",
-    "ref": "7",
-    "sup": [],
-    "mono": null
-   },
-   {
-    "pn": "11110-53A05",
-    "name": "Head, Cylinder",
-    "diagram": "シリンダーヘッド",
-    "uid": "23053200_1",
+    "pn": "13900-80F00",
+    "name": "Charger Assy,Turbo",
+    "diagram": "ターボチャージャー",
+    "uid": "23053210_13",
     "ref": "1",
     "sup": [],
     "mono": null
    },
    {
-    "pn": "11117-52E10",
-    "name": "Bolt,CylinderHead",
-    "diagram": "シリンダーヘッド",
-    "uid": "23053200_1",
-    "ref": "6",
+    "pn": "13930-73B50",
+    "name": "Pipe,TurboOil,Intake",
+    "diagram": "ターボチャージャー",
+    "uid": "23053210_13",
+    "ref": "2",
+    "sup": [
+     "13930-73B5V"
+    ],
+    "mono": null
+   },
+   {
+    "pn": "13948-85560",
+    "name": "Bolt,Union 8X20",
+    "diagram": "ターボチャージャー",
+    "uid": "23053210_13",
+    "ref": "3",
     "sup": [],
+    "mono": null
+   },
+   {
+    "pn": "09168-08016",
+    "name": "Gasket(8.2X14X1)",
+    "diagram": "ターボチャージャー",
+    "uid": "23053210_13",
+    "ref": "4",
+    "sup": [
+     "09168-B0801-6N000"
+    ],
+    "mono": null
+   },
+   {
+    "pn": "09360-10031",
+    "name": "Bolt,Union",
+    "diagram": "ターボチャージャー",
+    "uid": "23053210_13",
+    "ref": "5",
+    "sup": [
+     "09360-10031-XC0"
+    ],
     "mono": null
    }
   ],
-  "at": "2026-11-11T10:00:40.474Z"
+  "at": "2026-11-11T10:04:17.908Z"
  }
 }
