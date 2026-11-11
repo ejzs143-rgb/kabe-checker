@@ -891,11 +891,21 @@
     var candText=cands.map(function(c){ return c.pn+' | '+c.name+' | 図面:'+c.diagram+' | 図番:'+c.ref; }).join('\n');
     var prompt='あなたはスズキ カプチーノ EA11R の部品案内アシスタントです。ユーザーの質問に対し、与えられた候補リストの中からだけ該当部品を最大5件選び、JSONのみで答えてください。形式: {"answer":"日本語の簡潔な説明","picks":["品番1","品番2"]}。候補に無い品番は絶対に出力しないこと。該当が無ければ picks は空にし、その旨を answer に書くこと。\n\n質問: '+q+'\n\n候補リスト:\n'+candText;
     toast('AIに聞いています…');
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-goog-api-key':key},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})
-    }).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(function(j){
+    var models=['gemini-2.5-flash','gemini-flash-latest','gemini-2.0-flash'];
+    function callModel(i){
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+models[i]+':generateContent',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-goog-api-key':key},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})
+      }).then(function(r){
+        if(!r.ok){ return r.text().then(function(t){ var err=new Error('HTTP '+r.status+' '+String(t).slice(0,120)); err.status=r.status; throw err; }); }
+        return r.json();
+      }).catch(function(e){
+        if(e && e.status===404 && i<models.length-1) return callModel(i+1);
+        throw e;
+      });
+    }
+    callModel(0).then(function(j){
       var txt=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(function(x){return x.text||'';}).join('');
       var parsed=null; try{ parsed=JSON.parse(txt); }catch(e){ var m=txt.match(/\{[\s\S]*\}/); if(m) parsed=JSON.parse(m[0]); }
       if(!parsed) throw new Error('応答形式エラー');
