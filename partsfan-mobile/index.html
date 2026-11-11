@@ -215,7 +215,7 @@
       </div>
       <div id="qaKeyState" class="small" style="margin-top:6px;display:none">APIキー設定済み <a href="#" id="qaKeyEdit">変更する</a></div>
       <button class="qbtn primary" type="button" id="qaAsk" style="margin-top:10px">AIに聞く</button>
-      <div class="small" style="margin-top:6px">キーが無い場合はGitHub経由（回答まで約1〜2分）で送ります。</div>
+      <button class="qbtn" type="button" id="qaGithub" style="margin-top:6px">キー無しで質問する（GitHub経由・回答まで約2分）</button>
       <div id="qaLocalHead" class="small" style="margin-top:10px;display:none">候補（入力した瞬間に出ます。タップで品番を②にセット）</div>
       <div id="qaLocal"></div>
       <button class="qbtn" type="button" id="qaReload" style="margin-top:10px">回答を再読み込み</button>
@@ -907,9 +907,10 @@
       QA={latest:{q:q,a:String(parsed.answer||''),ai:true,picks:picks}};
       renderQa(); toast('AI回答が届きました');
     }).catch(function(e){
-      toast('AI呼び出しに失敗（'+e.message+'）。GitHub経由で送ります');
-      var url='https://github.com/ejzs143-rgb/kabe-checker/issues/new?title='+encodeURIComponent('parts-chat')+'&body='+encodeURIComponent(q);
-      window.open(url,'_blank','noopener');
+      toast('AI呼び出しに失敗: '+e.message);
+      var fb=localCandidates(q,5).map(function(c){ return {pn:c.pn,name:c.name,diagram:c.diagram,uid:c.uid,ref:c.ref,mono:null}; });
+      QA={latest:{q:q,a:'AI呼び出しに失敗しました（'+e.message+'）。キーが正しいか確認してください。下は機械検索の候補です。',ai:false,picks:fb}};
+      renderQa();
     });
     return true;
   }
@@ -1095,10 +1096,20 @@
   if($('qaInput')){ $('qaInput').addEventListener('input',renderQaLocal); }
   if($('qaAsk')){ $('qaAsk').addEventListener('click',function(){
     var q=($('qaInput').value||'').trim(); if(!q){ toast('質問を入力してください'); return; }
-    if(askGemini(q)) return;
+    if(!geminiKey()){
+      var kb=$('qaKeyBox'); if(kb){ kb.style.display='block'; }
+      var ks=$('qaKeyState'); if(ks) ks.style.display='none';
+      toast('先にGemini APIキーを貼り付けて「保存」を押してください');
+      var ki=$('qaKey'); if(ki){ ki.scrollIntoView({block:'center'}); ki.focus(); }
+      return;
+    }
+    askGemini(q);
+  }); }
+  if($('qaGithub')){ $('qaGithub').addEventListener('click',function(){
+    var q=($('qaInput').value||'').trim(); if(!q){ toast('質問を入力してください'); return; }
     var url='https://github.com/ejzs143-rgb/kabe-checker/issues/new?title='+encodeURIComponent('parts-chat')+'&body='+encodeURIComponent(q);
     window.open(url,'_blank','noopener');
-    toast('GitHubで送信を押してください。回答は約1〜2分後');
+    toast('GitHubで送信（サブミット）を押してください。回答は約1〜2分後');
   }); }
   if($('qaKeySave')){ $('qaKeySave').addEventListener('click',function(){
     var v=($('qaKey').value||'').trim(); if(!v){ toast('キーを貼り付けてください'); return; }
