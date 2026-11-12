@@ -283,7 +283,7 @@ function calc(G, cfg) {
     const baseI = Math.floor(Math.max(0, G - Math.max(0, RULE.shotokuKiso - kyuyo)) / 1000) * 1000;
     tax += Math.floor(baseI * RULE.shotokuRate);
   }
-  const gensen = G > 0 ? Math.floor(G * 0.15315) + Math.floor(G * 0.05) : 0;
+  const gensen = G > 0 ? Math.floor(G * RULE.shotokuRate) + Math.floor(G * RULE.juminRate) : 0;
 
   let zone;
   if (G <= kintouLineG) zone = 'ok';
@@ -376,8 +376,9 @@ function render() {
     ? '→ 年 ' + yen(state.part) + ' の見込み（×12か月）で計算'
     : '→ 年 ' + yen(state.part) + ' で計算';
   const pw = $('partWarn');
-  if (state.part >= RULE.shaho) { pw.hidden = false; pw.textContent = 'パート収入だけで130万円以上です。株に関係なく夫の扶養から外れる水準です。'; }
-  else if (state.part > 1900000 - 1) { pw.hidden = false; pw.textContent = 'この金額はツールの対象外です。'; }
+  // 190万円以上の判定を先にする（130万円以上の判定が先だと、この警告が出ることがないため）
+  if (state.part >= 1900000) { pw.hidden = false; pw.textContent = 'この金額はツールの対象外です。'; }
+  else if (state.part >= RULE.shaho) { pw.hidden = false; pw.textContent = 'パート収入だけで130万円以上です。株に関係なく夫の扶養から外れる水準です。'; }
   else if (state.part > RULE.kyuyoMin) { pw.hidden = false; pw.textContent = 'パート年収が74万円を超えると給与の所得が出るため、住民税の壁が下がります（自動で反映済み）。'; }
   else pw.hidden = true;
 
